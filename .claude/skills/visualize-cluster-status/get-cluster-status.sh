@@ -35,35 +35,31 @@ fi
 
 echo "CLUSTER_NOT_DEPLOYED=false"
 
+# Get script directory to locate the collector script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COLLECTOR_SCRIPT="$SCRIPT_DIR/collect-resource-data.sh"
+
+if [ ! -x "$COLLECTOR_SCRIPT" ]; then
+    echo "Error: collect-resource-data.sh not found or not executable at $COLLECTOR_SCRIPT" >&2
+    exit 1
+fi
+
 # Create temporary directory for parallel results
 TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
-# Gather all data in parallel for speed - launch all oc commands simultaneously
+# Gather all data in parallel using the modular collector script
+# Launch all collectors simultaneously for maximum performance
 {
-    # ClusterInstance - get full JSON once in background
-    ($OC_CMD get clusterinstance "$CLUSTER_NAME" -n "$CLUSTER_NAME" -o json 2>/dev/null > "$TMPDIR/ci.json" || echo '{}' > "$TMPDIR/ci.json") &
+    # Launch parallel data collectors for each resource type
+    "$COLLECTOR_SCRIPT" clusterinstance "$CLUSTER_NAME" "$KUBECONFIG_PATH" "$TMPDIR/ci.json" &
+    "$COLLECTOR_SCRIPT" baremetalhost "$CLUSTER_NAME" "$KUBECONFIG_PATH" "$TMPDIR/bmh.json" &
+    "$COLLECTOR_SCRIPT" infraenv "$CLUSTER_NAME" "$KUBECONFIG_PATH" "$TMPDIR/infraenv.json" &
+    "$COLLECTOR_SCRIPT" agentclusterinstall "$CLUSTER_NAME" "$KUBECONFIG_PATH" "$TMPDIR/aci.json" &
+    "$COLLECTOR_SCRIPT" agents "$CLUSTER_NAME" "$KUBECONFIG_PATH" "$TMPDIR/agents.json" &
+    "$COLLECTOR_SCRIPT" managedcluster "$CLUSTER_NAME" "$KUBECONFIG_PATH" "$TMPDIR/mc.json" &
 
-    # BareMetalHost
-    ($OC_CMD get baremetalhost "$CLUSTER_NAME" -n "$CLUSTER_NAME" -o jsonpath='{.status.operationalStatus}' 2>/dev/null > "$TMPDIR/bmh_status" || echo "N/A" > "$TMPDIR/bmh_status") &
-    ($OC_CMD get baremetalhost "$CLUSTER_NAME" -n "$CLUSTER_NAME" -o jsonpath='{.status.provisioning.state}' 2>/dev/null > "$TMPDIR/bmh_prov" || echo "N/A" > "$TMPDIR/bmh_prov") &
-    ($OC_CMD get baremetalhost "$CLUSTER_NAME" -n "$CLUSTER_NAME" -o jsonpath='{.status.poweredOn}' 2>/dev/null > "$TMPDIR/bmh_power" || echo "N/A" > "$TMPDIR/bmh_power") &
-
-    # InfraEnv
-    ($OC_CMD get infraenv "$CLUSTER_NAME" -n "$CLUSTER_NAME" -o jsonpath='{.status.conditions[?(@.type=="ImageCreated")].status}' 2>/dev/null > "$TMPDIR/infraenv_img" || echo "N/A" > "$TMPDIR/infraenv_img") &
-    ($OC_CMD get infraenv "$CLUSTER_NAME" -n "$CLUSTER_NAME" -o jsonpath='{.status.conditions[?(@.type=="ImageCreated")].lastTransitionTime}' 2>/dev/null > "$TMPDIR/infraenv_time" || echo "N/A" > "$TMPDIR/infraenv_time") &
-
-    # AgentClusterInstall - get full JSON once
-    ($OC_CMD get agentclusterinstall "$CLUSTER_NAME" -n "$CLUSTER_NAME" -o json 2>/dev/null > "$TMPDIR/aci.json" || echo '{}' > "$TMPDIR/aci.json") &
-
-    # Agents
-    ($OC_CMD get agents -n "$CLUSTER_NAME" -o json 2>/dev/null > "$TMPDIR/agents.json" || echo '{"items":[]}' > "$TMPDIR/agents.json") &
-
-    # ManagedCluster
-    ($OC_CMD get managedcluster "$CLUSTER_NAME" -o jsonpath='{.status.conditions[?(@.type=="ManagedClusterConditionAvailable")].status}' 2>/dev/null > "$TMPDIR/mc_avail" || echo "N/A" > "$TMPDIR/mc_avail") &
-    ($OC_CMD get managedcluster "$CLUSTER_NAME" -o jsonpath='{.status.conditions[?(@.type=="ManagedClusterJoined")].status}' 2>/dev/null > "$TMPDIR/mc_joined" || echo "N/A" > "$TMPDIR/mc_joined") &
-
-    # Wait for all background jobs to complete
+    # Wait for all background collectors to complete
     wait
 
     # Now parse and output all results from ClusterInstance JSON
@@ -82,27 +78,28 @@ trap "rm -rf $TMPDIR" EXIT
     echo -n "CI_MANIFESTS_RENDERED="
     jq -c '.status.manifestsRendered // []' "$TMPDIR/ci.json"
 
-    # BareMetalHost
+    # BareMetalHost - parse from JSON
     echo -n "BMH_STATUS="
-    cat "$TMPDIR/bmh_status"
-    echo ""
+    jq -r '.operationalStatus // "N/A"' "$TMPDIR/bmh.json"
 
     echo -n "BMH_PROV_STATE="
-    cat "$TMPDIR/bmh_prov"
-    echo ""
+    jq -r '.provisioningState // "N/A"' "$TMPDIR/bmh.json"
 
     echo -n "BMH_POWER="
-    cat "$TMPDIR/bmh_power"
-    echo ""
+    jq -r '.poweredOn // "N/A"' "$TMPDIR/bmh.json"
 
-    # InfraEnv
+    echo -n "BMH_LAST_UPDATED="
+    jq -r '.lastUpdated // "N/A"' "$TMPDIR/bmh.json"
+
+    # InfraEnv - parse from JSON
     echo -n "INFRAENV_IMAGE="
-    cat "$TMPDIR/infraenv_img"
-    echo ""
+    jq -r '.imageCreated // "N/A"' "$TMPDIR/infraenv.json"
 
     echo -n "INFRAENV_TIME="
-    cat "$TMPDIR/infraenv_time"
-    echo ""
+    jq -r '.imageCreatedTime // "N/A"' "$TMPDIR/infraenv.json"
+
+    echo -n "INFRAENV_CREATED_TIME="
+    jq -r '.createdTime // "N/A"' "$TMPDIR/infraenv.json"
 
     # AgentClusterInstall - parse from JSON
     echo -n "ACI_STATE="
@@ -136,13 +133,14 @@ trap "rm -rf $TMPDIR" EXIT
     echo -n "AGENT_DETAILS="
     jq -c '[.items[] | {id: (.metadata.name[-4:]), approved: .spec.approved, state: .status.debugInfo.state, role: .status.role}]' "$TMPDIR/agents.json"
 
-    # ManagedCluster
+    # ManagedCluster - parse from JSON
     echo -n "MC_AVAILABLE="
-    cat "$TMPDIR/mc_avail"
-    echo ""
+    jq -r '.available // "N/A"' "$TMPDIR/mc.json"
 
     echo -n "MC_JOINED="
-    cat "$TMPDIR/mc_joined"
-    echo ""
+    jq -r '.joined // "N/A"' "$TMPDIR/mc.json"
+
+    echo -n "MC_CREATED="
+    jq -r '.creationTimestamp // "N/A"' "$TMPDIR/mc.json"
 
 } 2>&1
