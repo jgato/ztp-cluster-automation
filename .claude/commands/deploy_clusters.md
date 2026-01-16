@@ -2,10 +2,6 @@
 The names of the clusters are provided by #$ARGUMENTS.
 Show a summary on the clusters list.
 
-Be patient during the cluster installation. Specially in the step to wait the cluster to be available. But, if takes
-longer than 3 hours consider the process failed. Show the user the status and possible reasons to fail. Then exit the
-command, but, invoke the command redeploy_clusters for this cluster.
-
 Follow these steps:
 0. Invoke the prepare_clusters command in the context of clusters preparation for deployment
 1. In the `kustomization.yaml` , check if these entries are already there and they are not commented. If so, notify the user about it and do nothing
@@ -22,6 +18,15 @@ Follow these steps:
    one the ArgoCD application that is called "clusters" by default.
 8. Show the status of cluster. Refresh the visualization information every 5 minutes. Until the
    Managedcluster CR status is available and joined.
+   **IMPORTANT: Wait for a MAXIMUM of 3 hours (180 minutes) for the cluster to become available.**
+   - Track elapsed time from when monitoring starts
+   - If 3 hours is reached and cluster is NOT available and joined:
+     * Abort the wait immediately
+     * Show final cluster status
+     * Notify user that deployment timeout was reached (3 hours)
+     * Skip steps 9-10 (password and kubeconfig extraction)
+     * Immediately invoke the redeploy_clusters command for this cluster
+     * Exit the deploy command
 9. Print out the kubeadmin password for the just created cluster. This is store in the namespace of the cluster, in a
    secret calle clustername-admin-password.
 10. Extract the kubeconfig file for the just created cluster. This is stored in the namespace of the cluster, in a
