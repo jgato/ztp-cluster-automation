@@ -21,6 +21,13 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GET_STATUS_SCRIPT="$SCRIPT_DIR/get-cluster-status.sh"
 
+# Determine project root (3 levels up from .claude/skills/visualize-cluster-status)
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+TEMP_BASE="$PROJECT_ROOT/.temp/visualize-cluster-status"
+
+# Create temp directory if it doesn't exist
+mkdir -p "$TEMP_BASE"
+
 if [ ! -x "$GET_STATUS_SCRIPT" ]; then
     echo "Error: get-cluster-status.sh not found or not executable"
     exit 1
@@ -114,7 +121,7 @@ sleep 2
 
 while true; do
     # Get fresh data
-    DATA_FILE=$(mktemp)
+    DATA_FILE=$(mktemp "$TEMP_BASE/monitor-data-$$-XXXXXX")
     "$GET_STATUS_SCRIPT" "$CLUSTER_NAME" "$KUBECONFIG_PATH" > "$DATA_FILE" 2>&1
 
     # Display formatted output

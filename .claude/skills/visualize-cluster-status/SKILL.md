@@ -20,19 +20,55 @@ When visualizing a ZTP cluster (provided by RHACM), focuses on all relevant Open
 
 **Performance:** Uses parallel data gathering - all OpenShift API queries execute simultaneously, completing in ~2 seconds instead of 10+ seconds with sequential queries.
 
+## Data Collection Method
+
+**Use the optimized data collection scripts** located in the same directory as this skill:
+
+### One-time Status Check
+```bash
+.claude/skills/visualize-cluster-status/get-cluster-status.sh <cluster-name> <kubeconfig-path>
+```
+
+This script:
+- Performs parallel data gathering for maximum performance (~2 seconds vs 10+ seconds)
+- Handles the ClusterInstance existence check automatically
+- Creates temporary files in `.temp/visualize-cluster-status/` (project-relative)
+- Returns structured data as key-value pairs
+
+**Usage:**
+```bash
+SKILL_DIR="<path-to>/.claude/skills/visualize-cluster-status"
+DATA=$("$SKILL_DIR/get-cluster-status.sh" "$CLUSTER_NAME" "$KUBECONFIG_PATH")
+```
+
+### Continuous Monitoring (Optional)
+For monitoring installation progress in real-time:
+```bash
+.claude/skills/visualize-cluster-status/monitor-cluster.sh <cluster-name> [kubeconfig-path] [interval-seconds]
+```
+
+This script:
+- Continuously refreshes cluster status at specified interval (default: 5 seconds)
+- Uses `get-cluster-status.sh` internally for data gathering
+- Displays formatted, live-updating status in terminal
+- Press Ctrl+C to stop monitoring
+
+**When to suggest monitoring:**
+- User asks to "monitor" or "watch" cluster installation
+- Cluster is actively installing (ACI_STATE = "installing")
+- User wants to see real-time progress updates
+
 ## Pre-Check: ClusterInstance Existence
 
-**BEFORE gathering any other data**, first check if the ClusterInstance CR exists:
+The `get-cluster-status.sh` script automatically handles this:
 
-1. Check for ClusterInstance CR in the cluster's namespace:
-   ```bash
-   oc --kubeconfig="$KUBECONFIG" get clusterinstance <cluster-name> -n <cluster-name> 2>&1
+1. **If the ClusterInstance does NOT exist**, the script returns:
+   ```
+   CLUSTER_NOT_DEPLOYED=true
+   NAMESPACE_EXISTS=true/false
    ```
 
-2. **If the ClusterInstance does NOT exist** (namespace not found OR ClusterInstance not found):
-   - Display a simple, clear notice that the cluster is not deployed
-   - **DO NOT proceed with gathering other resource data**
-   - Example output:
+   Display a simple notice:
    ```
    # 🎯 <cluster-name> | Status: ❌ NOT DEPLOYED
 
@@ -49,7 +85,7 @@ When visualizing a ZTP cluster (provided by RHACM), focuses on all relevant Open
    ```
    ```
 
-3. **If the ClusterInstance EXISTS**:
+2. **If the ClusterInstance EXISTS**, the script returns all resource data:
    - Proceed with the full status visualization as detailed below
 
 ## Display Format - COMPACT LAYOUT
@@ -66,75 +102,59 @@ Create a **condensed, horizontally-optimized** status report that minimizes vert
    Display resources using ASCII-style tables that render properly in terminals.
    Use box-drawing with +, -, and | characters instead of markdown tables.
 
-### Data to Collect
+### Data Available from Script Output
 
-**ClusterInstance** (namespace: cluster-name, kind: ClusterInstance, name: cluster-name) - **PRIMARY CR**:
-- `metadata.creationTimestamp` - When cluster deployment was initiated
-- `metadata.generation` vs `status.observedGeneration` - Check if spec changes are being processed
-- `status.conditions[]` - All conditions with their status, message, and reason:
-  - `ClusterInstanceValidated` - Whether the ClusterInstance spec is valid
-  - `RenderedTemplates` - If manifests were successfully rendered
-  - `RenderedTemplatesValidated` - If rendered templates passed validation
-  - `RenderedTemplatesApplied` - If manifests were applied to cluster namespace
-  - `ClusterProvisioned` - Overall provisioning status
-  - `ClusterProvisioning` - Active provisioning state
-  - `ClusterDeployed` - Final deployment status
-- `status.manifestsRendered` - Count of rendered manifests
-- `status.deployedManifests` - List of successfully deployed manifests
-- Show this CR FIRST as it's the main entry point
+The `get-cluster-status.sh` script returns the following variables (source the output or parse as key=value):
 
-**BareMetalHost** (namespace: cluster-name, kind: BareMetalHost, name: cluster-name):
-- `status.operationalStatus`
-- `status.provisioning.state`
-- `status.poweredOn`
-- `status.lastUpdated` (for timing info)
+**ClusterInstance** - **PRIMARY CR** (show this FIRST):
+- `CI_CREATED` - When cluster deployment was initiated
+- `CI_GENERATION` - Current spec generation
+- `CI_OBSERVED_GEN` - Last observed generation (compare to detect spec changes being processed)
+- `CI_CONDITIONS` - JSON array of all conditions with type, status, message, and reason
+- `CI_MANIFESTS_RENDERED` - JSON array of rendered manifests
 
-**InfraEnv** (namespace: cluster-name, kind: InfraEnv, name: cluster-name):
-- `status.conditions[?(@.type=="ImageCreated")].status`
-- `status.conditions[?(@.type=="ImageCreated")].lastTransitionTime`
-- `status.createdTime` (when ISO was created)
+**BareMetalHost**:
+- `BMH_STATUS` - Operational status
+- `BMH_PROV_STATE` - Provisioning state
+- `BMH_POWER` - Power state (on/off)
+- `BMH_LAST_UPDATED` - Last update timestamp
 
-**AgentClusterInstall** (namespace: cluster-name, kind: AgentClusterInstall, name: cluster-name):
-- `status.debugInfo.state` - Current installation state
-- `status.debugInfo.stateInfo` - Detailed state information
-- `status.debugInfo.eventsURL` - Link to events (if available)
-- `status.progress.totalPercentage` or `status.debugInfo.totalPercentage` - Overall progress
-- `status.installStartedAt` - Installation start time
-- **ALL conditions with messages** for detailed status:
-  - `Completed` - Installation completion status
-  - `Failed` - Failure status with reason
-  - `Validated` - Pre-installation validation
-  - `RequirementsMet` - Hardware/network requirements
-  - `SpecSynced` - Configuration sync status
-  - `Stopped` - If installation stopped
-- `status.validationsInfo` - Detailed validation results (if available)
+**InfraEnv**:
+- `INFRAENV_IMAGE` - Whether ISO image was created (True/False)
+- `INFRAENV_TIME` - When image was created
+- `INFRAENV_CREATED_TIME` - InfraEnv creation timestamp
 
-**Agents** (namespace: cluster-name, kind: Agent):
-- Count total agents
-- Count approved vs unapproved
-- **For each agent:**
-  - `metadata.name` (truncate to last 4 chars for display)
-  - `spec.approved` - Approval status
-  - `status.debugInfo.state` - Current state (discovering, known, insufficient, installing, installed)
-  - `status.role` - Assigned role (master, worker)
-  - `status.progress.currentStage` - Current installation stage
-  - `status.progress.progressInfo` - Detailed progress
-  - `status.validationsInfo` - Validation results (hardware, network, etc.)
-  - `status.inventory.hostname` - Host identification
-  - **Key validations to show:**
-    - Hardware validation (CPU, RAM, Disk)
-    - Network validation (connectivity, DNS)
-    - Container runtime validation
+**AgentClusterInstall**:
+- `ACI_STATE` - Current installation state (installing, adding-hosts, etc.)
+- `ACI_INFO` - Detailed state information/message
+- `ACI_PROGRESS` - Overall installation progress percentage
+- `ACI_COMPLETED` - Completed condition status
+- `ACI_FAILED` - Failed condition status
+- `ACI_VALIDATED` - Validated condition status
+- `ACI_REQS` - RequirementsMet condition status
 
-**ManagedCluster** (kind: ManagedCluster, name: cluster-name):
-- `status.conditions[?(@.type=="ManagedClusterConditionAvailable")].status`
-- `status.conditions[?(@.type=="ManagedClusterJoined")].status`
-- `metadata.creationTimestamp` - When cluster was registered
+**Agents**:
+- `AGENT_COUNT` - Total number of agents
+- `AGENT_APPROVED` - Number of approved agents
+- `AGENT_DETAILS` - JSON array with agent info: `[{id, approved, state, role}, ...]`
 
-**Installation Events** (Optional but recommended during installation):
-- Get recent events in the cluster namespace to show progress/errors:
-  - `oc get events -n <cluster-name> --sort-by='.lastTimestamp' | tail -5`
-  - Show only warnings/errors if installation is failing
+**ManagedCluster**:
+- `MC_AVAILABLE` - Available condition status
+- `MC_JOINED` - Joined condition status
+- `MC_CREATED` - When cluster was registered with hub
+
+**Parsing the output:**
+```bash
+# Source the script output to get all variables
+eval "$($SKILL_DIR/get-cluster-status.sh "$CLUSTER_NAME" "$KUBECONFIG_PATH")"
+
+# Or parse manually:
+while IFS='=' read -r key value; do
+  export "$key=$value"
+done < <($SKILL_DIR/get-cluster-status.sh "$CLUSTER_NAME" "$KUBECONFIG_PATH")
+```
+
+**Use ONLY the data returned by the script** - do not query for additional information, events, or troubleshooting details.
 
 ### Enhanced Output Example (During Installation)
 
@@ -161,27 +181,17 @@ Create a **condensed, horizontally-optimized** status report that minimizes vert
 +----------------------+--------+--------------+------------------------------+
 
 ## Agent Details (1 total, 1 approved)
-+---------+-------------------+--------+------------+----------------------+----------+
-| ID      | Hostname          | Role   | State      | Stage                | Progress |
-+---------+-------------------+--------+------------+----------------------+----------+
-| ...0005 | node1.example.com | master | installing | Writing image to disk| 35%      |
-+---------+-------------------+--------+------------+----------------------+----------+
-
-**Agent Validations:**
-- ✅ Hardware: CPU(8), RAM(32GB), Disk(120GB)
-- ✅ Network: Connectivity OK, DNS resolved
-- ✅ Container runtime ready
++---------+--------+------------+
+| ID      | Role   | State      |
++---------+--------+------------+
+| ...0005 | master | installing |
++---------+--------+------------+
 
 **Installation Conditions:**
-- ✅ Validated - All pre-flight checks passed
-- ✅ RequirementsMet - Hardware and network requirements satisfied
-- 🚀 Completed - False (in progress)
+- ✅ Validated
+- ✅ RequirementsMet
+- 🚀 Completed - False
 - ✅ Failed - False
-
-**Recent Events:**
-- 10:35:12 - Agent installation in progress: Writing image to disk
-- 10:32:45 - Agent started installation
-- 10:30:20 - Cluster installation initiated
 ```
 
 ### Compact Output Example (Completed Installation)
@@ -207,11 +217,11 @@ Create a **condensed, horizontally-optimized** status report that minimizes vert
 +----------------------+--------+--------------------+----------------------+
 
 ## Agent Details (1 total, 1 approved)
-+---------+-------------------+--------+-----------+-------+
-| ID      | Hostname          | Role   | State     | Stage |
-+---------+-------------------+--------+-----------+-------+
-| ...0005 | node1.example.com | master | installed | Done  |
-+---------+-------------------+--------+-----------+-------+
++---------+--------+-----------+
+| ID      | Role   | State     |
++---------+--------+-----------+
+| ...0005 | master | installed |
++---------+--------+-----------+
 
 **Conditions:** ✅ Validated ✅ Requirements ✅ Completed ✅ Not Failed
 ```
@@ -220,29 +230,24 @@ Create a **condensed, horizontally-optimized** status report that minimizes vert
 
 **ALWAYS show ClusterInstance status first** as it's the primary CR that drives everything.
 
+**Show ONLY the data returned by get-cluster-status.sh script** - no additional queries or troubleshooting information.
+
 **When cluster is INSTALLING (state: installing, insufficient-hosts, pending-for-input):**
 - Show ClusterInstance conditions in detail with messages
-- Show FULL details including:
-  - Installation progress percentage
-  - Current installation stage for each agent
-  - Agent validations (hardware, network)
-  - Recent events (last 3-5)
-  - Installation start time and elapsed duration
-  - Detailed condition messages (not just status)
+- Show installation progress percentage (from ACI_PROGRESS)
+- Show agent details from AGENT_DETAILS (id, role, state, approved)
+- Show condition statuses (ACI_VALIDATED, ACI_REQS, ACI_COMPLETED, ACI_FAILED)
 
 **When cluster is INSTALLED/COMPLETE:**
 - Show COMPACT view:
   - Summary status only
   - Agent counts and final states
   - Conditions as one-line summary with icons
-  - No need for detailed validations or events
 
 **When cluster has ERRORS (Failed=True or state contains "error"):**
-- Show ERROR details:
-  - Failed condition message
-  - Agent validation failures
-  - Recent error events
-  - Troubleshooting hints if available
+- Display the status as-is from the script data
+- Show ACI_INFO field which contains error details
+- Do NOT query for additional troubleshooting information
 
 ### Styling Rules
 
@@ -251,14 +256,13 @@ Create a **condensed, horizontally-optimized** status report that minimizes vert
 - **Table borders:** Use + for corners, - for horizontal lines, | for vertical separators
 - **Column alignment:** Left-align text, pad with spaces for consistent column widths
 - **Use icons consistently:** ✅ (success), ⚠️ (warning), ❌ (error), ⏳ (pending), 🚀 (installing)
-- **Progress indicators:** Show percentage when available during installation
-- **Timing info:** Calculate and show elapsed time during installation
+- **Progress indicators:** Show percentage when available during installation (from ACI_PROGRESS)
 - **Keep descriptions short:** Use abbreviations where clear (e.g., "AgentClusterInst" instead of "AgentClusterInstall")
 - **Combine sections:** Don't create separate sections for each resource
-- **Truncate IDs:** Show last 4 digits for agent IDs
-- **Hostname display:** Show hostname when available (more useful than agent ID)
+- **Truncate IDs:** Show last 4 digits for agent IDs (from AGENT_DETAILS)
 - **Inline conditions:** Expand during installation, compress when complete
 - **No excessive whitespace:** Minimize blank lines between sections
+- **Data scope:** Use ONLY data from get-cluster-status.sh output - no additional fields or queries
 
 ### Error Handling
 

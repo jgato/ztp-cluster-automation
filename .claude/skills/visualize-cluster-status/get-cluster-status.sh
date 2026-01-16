@@ -39,13 +39,18 @@ echo "CLUSTER_NOT_DEPLOYED=false"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COLLECTOR_SCRIPT="$SCRIPT_DIR/collect-resource-data.sh"
 
+# Determine project root (3 levels up from .claude/skills/visualize-cluster-status)
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+TEMP_BASE="$PROJECT_ROOT/.temp/visualize-cluster-status"
+
 if [ ! -x "$COLLECTOR_SCRIPT" ]; then
     echo "Error: collect-resource-data.sh not found or not executable at $COLLECTOR_SCRIPT" >&2
     exit 1
 fi
 
-# Create temporary directory for parallel results
-TMPDIR=$(mktemp -d)
+# Create temporary directory for parallel results with unique name
+mkdir -p "$TEMP_BASE"
+TMPDIR=$(mktemp -d "$TEMP_BASE/get-status-$$-XXXXXX")
 trap "rm -rf $TMPDIR" EXIT
 
 # Gather all data in parallel using the modular collector script
