@@ -135,6 +135,7 @@ Located in `.claude/skills/visualize-cluster-status/`:
 ### Usage Notes
 
 - When executing and script never use `cd` command to move to the directory of the script. Execute including the path
+- When executing script never call with env variables as prefix
 - All ArgoCD commands use `--insecure` and `--grpc-web` parameters
 - All `oc` commands use `--kubeconfig <path>` parameter with configured KUBECONFIG. The configured KUBECONFIG exists in
   the context or as an env variable

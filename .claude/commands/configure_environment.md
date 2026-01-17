@@ -16,7 +16,7 @@ Follow these steps
      user to provide a new KUBECONFIG path, set it, then re-run the script.
    - If script exits with code 0: Continue to next step
 2. Check if in the context we have a hub selected. Show the user the hub that is going to be used, and prompt the user to select a different one. Use the list of
-   available ones.
+   available ones from the CLAUDE.md file
 
 From now on, whatever `oc` command will use the KUBECONFIG from the env variable or the context.
 From now on, whatever `oc` command will be invoked with `--kubeconfig` param and that KUBECONFIG information.
