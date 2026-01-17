@@ -60,132 +60,17 @@ Example endpoints:
 
 ## Installation
 
-### 1. Clone Repository
+Clone Repository
 
 ```bash
 git clone <repository-url>
 cd clusterinstance
 ```
-
-### 2. Configure Environment
-
-Set your KUBECONFIG and hub selection:
-
-```bash
-export KUBECONFIG=~/path/to/your/hub-kubeconfig
-```
-
-Or use the interactive configuration:
-
-```bash
-/configure_environment
-```
-
-### 3. Verify Setup
-
-```bash
-oc get clusterinstances --all-namespaces
-argocd app list --server <your-hub-endpoint> --insecure --grpc-web
-```
-
 ## Usage
 
 ### Available Commands
 
-All commands are located in `.claude/commands/`:
-
-#### `/configure_environment`
-Configure KUBECONFIG and select target hub for operations.
-
-```bash
-/configure_environment
-```
-
-#### `/deploy_clusters`
-Deploy one or more clusters via GitOps workflow.
-
-```bash
-/deploy_clusters vsno5
-```
-
-**Workflow:**
-1. Validates cluster manifests exist
-2. Creates namespace and required secrets
-3. Uncomments/adds cluster in `kustomization.yaml`
-4. Commits and pushes to git
-5. Syncs ArgoCD application
-6. Monitors deployment until ManagedCluster is Available & Joined
-7. Extracts kubeadmin credentials
-
-#### `/remove_clusters`
-Remove one or more clusters via GitOps workflow.
-
-```bash
-/remove_clusters vsno5
-```
-
-**Workflow:**
-1. Comments cluster entry in `kustomization.yaml`
-2. Commits and pushes to git
-3. Syncs ArgoCD application with `--prune` flag
-4. Monitors removal until ClusterInstance is deleted
-
-#### `/redeploy_clusters`
-Complete cluster redeployment (remove + deploy).
-
-```bash
-/redeploy_clusters vsno5
-```
-
-**Workflow:**
-1. Backs up cluster secrets
-2. Removes cluster completely
-3. Waits for full removal
-4. Recreates namespace and restores secrets
-5. Deploys cluster fresh
-6. Extracts new credentials
-
-#### `/prepare_clusters`
-Prepare cluster pre-requirements (secrets and namespace).
-
-```bash
-/prepare_clusters vsno5
-```
-
-Creates:
-- Namespace with cluster name
-- `assisted-deployment-pull-secret` (from `~/.config/containers/auth.json`)
-- `<clustername>-bmc-secret` (BMC credentials via zenity prompt)
-
-#### `/synch_clusters`
-Manually sync ArgoCD application.
-
-```bash
-/synch_clusters <hub-endpoint> <app-name> [prune]
-```
-
-Example:
-```bash
-/synch_clusters openshift-gitops-server-openshift-gitops.apps.hub-prod.example.com clusters prune
-```
-
-### Available Skills
-
-#### `/visualize-cluster-status`
-Display comprehensive cluster status with parallel data gathering.
-
-```bash
-/visualize-cluster-status vsno5
-```
-
-**Monitored Resources:**
-- ClusterInstance (primary CR)
-- BareMetalHost
-- InfraEnv
-- AgentClusterInstall
-- Agents
-- ManagedCluster
-
+Check the list of skills and commands on the [CLAUDE.md file](./CLAUDE.md)
 
 ## Configuration
 
