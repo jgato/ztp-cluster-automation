@@ -26,7 +26,7 @@ When visualizing a ZTP cluster (provided by RHACM), focuses on all relevant Open
 
 ### One-time Status Check
 ```bash
-.claude/skills/visualize-cluster-status/get-cluster-status.sh <cluster-name> <kubeconfig-path>
+.claude/skills/visualize-cluster-status/scripts/get-cluster-status.sh <cluster-name> <kubeconfig-path>
 ```
 
 This script:
@@ -38,13 +38,13 @@ This script:
 **Usage:**
 ```bash
 SKILL_DIR="<path-to>/.claude/skills/visualize-cluster-status"
-DATA=$("$SKILL_DIR/get-cluster-status.sh" "$CLUSTER_NAME" "$KUBECONFIG_PATH")
+DATA=$("$SKILL_DIR/scripts/get-cluster-status.sh" "$CLUSTER_NAME" "$KUBECONFIG_PATH")
 ```
 
 ### Continuous Monitoring (Optional)
 For monitoring installation progress in real-time:
 ```bash
-.claude/skills/visualize-cluster-status/monitor-cluster.sh <cluster-name> [kubeconfig-path] [interval-seconds]
+.claude/skills/visualize-cluster-status/scripts/monitor-cluster.sh <cluster-name> [kubeconfig-path] [interval-seconds]
 ```
 
 This script:
