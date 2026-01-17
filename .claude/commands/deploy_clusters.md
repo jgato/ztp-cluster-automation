@@ -1,18 +1,18 @@
-# Deploy ZTP clusters by name
-The names of the clusters are provided by #$ARGUMENTS.
-Show a summary on the clusters list.
+# Deploy ZTP cluster by name
+The name of the cluster is provided by #$ARGUMENTS. Only one cluster can be deployed per request.
+Show a summary of the cluster to be deployed.
 
 Follow these steps:
-0. Invoke the prepare_clusters command in the context of clusters preparation for deployment
-1. In the `kustomization.yaml` , check if these entries are already there and they are not commented. If so, notify the user about it and do nothing
+0. Invoke the prepare_clusters command in the context of cluster preparation for deployment
+1. In the `kustomization.yaml`, check if this entry is already there and it is not commented. If so, notify the user about it and do nothing
    and exit.
-2. Check the names of the clusters exists, and there is a manifest with these names, that contains a yaml with a Kind
-   Clusterinstane
-3. For every cluster call the command prepare_clusters to satisfy pre-requirements. This command will create a pull
-   secret and the need it bmc credentials, to trigger the installtion by the RHACM Assisted Service.
-4. Add the entries for all the names of the clusters, to the kustomization.yaml, or uncomment them if they were
+2. Check the name of the cluster exists, and there is a manifest with this name, that contains a yaml with a Kind
+   ClusterInstance
+3. Call the command prepare_clusters to satisfy pre-requirements. This command will create a pull
+   secret and the needed bmc credentials, to trigger the installation by the RHACM Assisted Service.
+4. Add the entry for the cluster to the kustomization.yaml, or uncomment it if it was
    commented. Pretty printout changes
-5. Use git to create a new commit with a message "adding clusters " and the clusters that has been removed
+5. Use git to create a new commit with a message "adding cluster " and the cluster name that has been added
 6. Do a git push over origin and main branch
 7. Synch ArgoCD "clusters" application in the proper hub, pass the command the arguments: 1st one the hub endpoint, 2nd
    one the ArgoCD application that is called "clusters" by default.

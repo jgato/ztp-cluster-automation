@@ -36,17 +36,17 @@ Configures the environment for ZTP operations by setting up KUBECONFIG and hub s
 - **Arguments:** None
 
 #### prepare_clusters
-Prepares cluster pre-requirements before deployment. Creates namespaces and required secrets (pull-secret and BMC credentials).
-- **Arguments:** One or more cluster names (space-separated)
+Prepares cluster pre-requirements before deployment. Creates namespace and required secrets (pull-secret and BMC credentials).
+- **Arguments:** Single cluster name (one cluster per request)
 - **Note:** In removal context, exits immediately
 
 #### deploy_clusters
-Complete GitOps workflow to deploy ZTP clusters. Prepares clusters, updates kustomization.yaml, commits, pushes, and syncs ArgoCD.
-- **Arguments:** One or more cluster names (space-separated)
+Complete GitOps workflow to deploy a ZTP cluster. Prepares cluster, updates kustomization.yaml, commits, pushes, and syncs ArgoCD.
+- **Arguments:** Single cluster name (one cluster per request)
 
 #### remove_clusters
-Complete GitOps workflow to remove ZTP clusters. Comments out entries in kustomization.yaml, commits, pushes, and syncs with prune.
-- **Arguments:** One or more cluster names (space-separated)
+Complete GitOps workflow to remove a ZTP cluster. Comments out entry in kustomization.yaml, commits, pushes, and syncs with prune.
+- **Arguments:** Single cluster name (one cluster per request)
 
 #### synch_clusters
 Synchronizes an ArgoCD application on a specific hub instance using SSO authentication.
@@ -54,11 +54,11 @@ Synchronizes an ArgoCD application on a specific hub instance using SSO authenti
 
 #### redeploy_clusters
 Complete workflow to redeploy a ZTP cluster. Removes cluster, waits for cleanup, restores secrets, and redeploys.
-- **Arguments:** Single cluster name (one at a time)
+- **Arguments:** Single cluster name (one cluster per request)
 
 #### telco_hub_rds_status
 Displays comprehensive status of a Telco Hub RDS cluster including operator versions and CR statuses.
-- **Arguments:** Cluster name
+- **Arguments:** Single cluster name (one cluster per request)
 
 ### Skills
 
@@ -134,7 +134,8 @@ Located in `.claude/skills/visualize-cluster-status/`:
 
 ### Usage Notes
 
-- When executing and script never use `cd` command to move to the directory of the script. Execute including the path
+- **CRITICAL: All cluster operations accept ONLY ONE cluster per request. Never attempt to process multiple clusters in a single command invocation.**
+- When executing any script never use `cd` command to move to the directory of the script. Execute including the path
 - When executing script never call with env variables as prefix
 - All ArgoCD commands use `--insecure` and `--grpc-web` parameters
 - All `oc` commands use `--kubeconfig <path>` parameter with configured KUBECONFIG. The configured KUBECONFIG exists in
