@@ -13,12 +13,12 @@ Follow these steps:
    minutes.
 4. if the application dont reach the "synched" status, shows an error that the hub is not properly configured
 5. If the application is "synched", proceed to gather operator versions and CR statuses
-6. Use the script `.claude/commands/get-operator-versions.sh` to collect operator versions in parallel:
+6. Use the script `.claude/commands/scrips/get-operator-versions.sh` to collect operator versions in parallel:
    - Script usage: `./get-operator-versions.sh <kubeconfig-path> [output-dir]`
    - If output-dir not provided, uses `.tmp-hub-status` directory in project root
    - Collects: Advanced Cluster Management, TALM, and OpenShift GitOps versions
    - Outputs JSON files: acm.json, talm.json, gitops.json
-7. Use the script `.claude/commands/get-cr-statuses.sh` to collect CR statuses in parallel:
+7. Use the script `.claude/commands/scripts/get-cr-statuses.sh` to collect CR statuses in parallel:
    - Script usage: `./get-cr-statuses.sh <kubeconfig-path> [output-dir]`
    - If output-dir not provided, uses `.tmp-hub-status` directory in project root (same as step 6)
    - Collects status for:
