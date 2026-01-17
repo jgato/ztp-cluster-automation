@@ -16,13 +16,16 @@ Follow these steps:
 6. Do a git push over origin and main branch
 7. Synch ArgoCD "clusters" application in the proper hub, pass the command the arguments: 1st one the hub endpoint, 2nd
    one the ArgoCD application that is called "clusters" by default.
-8. Show the status of cluster. Refresh the visualization information every 5 minutes. Until the
-   Managedcluster CR status is available and joined.
+8. Monitor cluster installation status by using the skill `visualize-cluster-status` every 5 minutes until the
+   ManagedCluster CR status is available and joined.
+   **CRITICAL: You MUST use ONLY the visualize-cluster-status skill to check status. DO NOT use direct oc commands.**
    **IMPORTANT: Wait for a MAXIMUM of 3 hours (180 minutes) for the cluster to become available.**
    - Track elapsed time from when monitoring starts
+   - Every 5 minutes: Invoke the visualize-cluster-status skill with the cluster name
+   - Check the skill output to determine if ManagedCluster is Available=True and Joined=True
    - If 3 hours is reached and cluster is NOT available and joined:
      * Abort the wait immediately
-     * Show final cluster status
+     * Use visualize-cluster-status skill one final time to show final cluster status
      * Notify user that deployment timeout was reached (3 hours)
      * Skip steps 9-10 (password and kubeconfig extraction)
      * Immediately invoke the redeploy_clusters command for this cluster

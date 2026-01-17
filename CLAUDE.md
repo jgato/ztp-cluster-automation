@@ -63,6 +63,8 @@ Displays comprehensive status of a Telco Hub RDS cluster including operator vers
 ### Skills
 
 #### visualize-cluster-status
+This skill is key and it always used to show the current status of any cluster, in any moment, or during installation,
+or removal, etc.
 Displays comprehensive status of ZTP/RHACM clusters including ClusterInstance, installation progress, agents, and related resources.
 - **Triggers:** "show cluster status", "check cluster", "monitor cluster", "cluster installation progress"
 - **Scripts:** Uses `get-cluster-status.sh` for one-time checks or `monitor-cluster.sh` for continuous monitoring

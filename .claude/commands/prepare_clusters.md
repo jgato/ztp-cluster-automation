@@ -8,7 +8,7 @@ redeployment).
    with the --kubeconfig param pointing to the selected kubeconfig.
 5. check if there is a Namespace created with the name of the different clusters to be prepared their pre-requirements.
    If not, create them.
-6. for every cluster: invoke the script `prepare_ztp_cluster_pre_reqs.sh` and pass the name of the cluster. The script
+6. for every cluster: invoke the script `.claude/commands/skills/prepare_ztp_cluster_pre_reqs.sh` and pass the name of the cluster. The script
    exists on the same directory than this commando. So, it is not needed it to find it.
 7. check that in the Namespace with the name of the cluster, there has been created two secrets. One of the a Secret
    called `assisted-deployment-pull-secret`, and the other a Secret with a name that is the result of concatenate

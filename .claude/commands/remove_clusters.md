@@ -12,7 +12,7 @@ Follow these steps:
 5. Do a git push over origin and main branch
 6. Synch ArgoCD "clusters" application in the proper hub, pass the command the arguments: 1st one the hub endpoint, 2nd
    one the ArgoCD application that is called "clusters" by default.
-7. show me the status of cluster. Refresh the visualization information every 5 minutes. Until the
+7. show me the status of cluster using the skill `visualize-cluster-status` . Refresh the visualization information every 5 minutes. Until the
    ClusterInstance CR has been removed. If the removal is taking too long, dont make any special extra checks. Just show
    the status and wait.
 8. Exist command.
