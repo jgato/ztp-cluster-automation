@@ -6,14 +6,15 @@ It takes no arguments. If arguments are provided  exist, and notify that the
 command does not use argumetns.
 
 if in the context we have kubeconfig with a path including '~', conver it to a absolute path
+When the user is promt to provide a KUBECONFIG show some example and instruct it to only use absolute paths. It cannot
+use '~'.
 
 Follow these steps
-1. Check there exists a KUBECONFIG enviroment variable. Or, if we have the KUBECONFIG in the context. If exists make a check with the following command: `[[ -n
-   "$KUBECONFIG" ]] && oc --kubeconfig="$KUBECONFIG" get --raw='/readyz' --request-timeout=5s >/dev/null 2>&1 && echo
-   "✅ Connected" || echo "❌ Failed/Unset"`
-2. If there is no KUBECONFIG, neither env variable, nor context. Pprompt the user to introduce the path before continuing. Dont check the file exists. Then, it just use the previous
-   check command.
-3. No more checks about connection to Openshift cluster are needed
+1. Execute the `check_cluster_kubeconfig.sh` script from the `.claude/commands/scripts` directory
+   - If script exits with code 1 (KUBECONFIG not set): Prompt the user to provide the KUBECONFIG path, set it, then re-run the script
+   - If script exits with code 2 (connectivity failed): Notify the user that the cluster is not reachable. Promt the
+     user to provide a new KUBECONFIG path, set it, then re-run the script.
+   - If script exits with code 0: Continue to next step
 2. Check if in the context we have a hub selected. Show the user the hub that is going to be used, and prompt the user to select a different one. Use the list of
    available ones.
 
