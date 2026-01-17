@@ -22,8 +22,12 @@ ArgoCD cli always use the --insecure param to access the endpoint witn a self-si
 
 ## Openshift interaction
 
-Whatever interaction with an `oc` command will use the `--kubeconfig` param. The value for the param is comming from the
-kubeconfig path from an env variable or from the context.
+**CRITICAL:** All `oc` commands MUST use the `--kubeconfig` parameter as the FIRST parameter immediately after `oc`.
+
+The value for the param is coming from the kubeconfig path from an env variable or from the context.
+
+**Correct format:** `oc --kubeconfig <path> <VERB> <arguments>`
+**Example:** `oc --kubeconfig /path/to/kubeconfig get pods -n namespace`
 
 ## Claude commands and scripts
 
@@ -138,8 +142,10 @@ Located in `.claude/skills/visualize-cluster-status/`:
 - When executing any script never use `cd` command to move to the directory of the script. Execute including the path
 - When executing script never call with env variables as prefix
 - All ArgoCD commands use `--insecure` and `--grpc-web` parameters
-- All `oc` commands use `--kubeconfig <path>` parameter with configured KUBECONFIG. The configured KUBECONFIG exists in
-  the context or as an env variable
+- **CRITICAL: All `oc` commands MUST have `--kubeconfig <path>` as the FIRST parameter immediately after `oc`**
+  - The configured KUBECONFIG exists in the context or as an env variable
+  - **Correct format:** `oc --kubeconfig <path> <VERB> <arguments>`
+  - **NEVER use:** `oc get --kubeconfig <path>` or `oc <VERB> --kubeconfig <path>`
 - GitOps operations follow the pattern: modify kustomization.yaml → commit → push → sync ArgoCD app
 - Cluster operations are namespace-scoped (one namespace per cluster)
 - Commands are context-aware and validate state before executing operations
