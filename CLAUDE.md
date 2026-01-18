@@ -1,5 +1,18 @@
 # ClusterInstances dir/repository
 
+## Welcome Message
+
+**IMPORTANT:** At the start of each new conversation session, you MUST:
+1. Display a brief welcome message explaining this is a ZTP (Zero Touch Provisioning) cluster automation project using GitOps
+2. Check and display the current environment status:
+   - Execute `check_cluster_kubeconfig.sh` to verify KUBECONFIG is set and accessible
+   - Display the KUBECONFIG path if set (from environment variable)
+   - Indicate which hub is currently configured (if detectable from context)
+3. If KUBECONFIG is not set or cluster is unreachable, strongly suggest running `/configure_environment` to set up the environment
+4. Provide a brief reminder that all cluster operations (deploy, remove, redeploy) accept ONLY ONE cluster per request
+
+## Project Overview
+
 This directory contains a set of different ClusterInstance CRs to manage your infrastructure.
 These CRs are part of an Openshift/Kubernetes API that you learn more [here](https://docs.redhat.com/en/documentation/red_hat_advanced_cluster_management_for_kubernetes/2.14/html/multicluster_engine_operator_with_red_hat_advanced_cluster_management/siteconfig-intro). The API is proveded by the RHACM Siteconfig Operator.
 
@@ -12,12 +25,40 @@ infrastructure with the GitOps way.
 During the GitOps tasks, these would be done over different ArgoCD instances, installed
 in the different RHACM hubs.
 
-By the moment we have:
- * hub-2: openshift-gitops-server-openshift-gitops.apps.hub-2.example.com
- * hub-1: openshift-gitops-server-openshift-gitops.apps.hub-1.example.com
- * multinode-1: openshift-gitops-server-openshift-gitops.apps.multinode-1.example.com
+### Hub Configuration File
 
-Use these endpoint together with the argocd cli to interact with the proper GitOps server
+**IMPORTANT:** Users should create a file named `ARGOCD_HUBS.md` in the project root directory to configure available ArgoCD hub instances. This file is **optional** but highly recommended as it helps the automation tools display default available hubs and their endpoints.
+
+**Example ARGOCD_HUBS.md structure:**
+
+```markdown
+# ArgoCD Hub Instances
+
+This file defines the available ArgoCD/OpenShift GitOps instances for this ZTP environment.
+
+## Available Hubs
+
+- **hub-1**
+  - Endpoint: openshift-gitops-server-openshift-gitops.apps.hub-1.example.com
+  - Description: Primary production hub
+
+- **hub-2**
+  - Endpoint: openshift-gitops-server-openshift-gitops.apps.hub-2.example.com
+  - Description: Secondary production hub
+
+- **multinode-1**
+  - Endpoint: openshift-gitops-server-openshift-gitops.apps.multinode-1.example.com
+  - Description: Multi-node test environment
+
+## Usage
+
+These endpoints are used with the ArgoCD CLI for GitOps operations.
+All ArgoCD commands should use `--insecure` and `--grpc-web` parameters.
+```
+
+**Note:** If `ARGOCD_HUBS.md` exists, automation tools will parse it to provide hub selection options and default values. If the file doesn't exist, users will need to manually specify hub endpoints.
+
+Use these endpoints together with the argocd cli to interact with the proper GitOps server.
 ArgoCD cli always use the --insecure param to access the endpoint witn a self-signed certificate
 
 ## Openshift interaction
