@@ -4,4 +4,5 @@
 # Temporary status data
 .tmp-hub-status/
 .tmp-secrets-backup/
+.tmp-*/
 .temp/

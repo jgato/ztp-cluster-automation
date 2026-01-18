@@ -33,6 +33,22 @@ Follow these steps:
 9. Print out the kubeadmin password for the just created cluster. This is store in the namespace of the cluster, in a
    secret calle clustername-admin-password.
 10. Extract the kubeconfig file for the just created cluster. This is stored in the namespace of the cluster, in a
-    secret called 'clustername-admin-kubeconfig'. Copy the kubeconfig on a local tmp directory, on a file called wit the name
-    'kubeconfig-clustername'
+    secret called 'clustername-admin-kubeconfig'.
+
+    **IMPORTANT: Always use a cluster-specific temporary directory in the project root:**
+
+    Execute these commands in order:
+    ```bash
+    # Create temporary directory for this cluster (safe if already exists)
+    mkdir -p .tmp-<clustername>
+
+    # Extract kubeconfig from secret and save to temp directory
+    oc --kubeconfig $KUBECONFIG get secret <clustername>-admin-kubeconfig -n <clustername> \
+      -o jsonpath='{.data.kubeconfig}' | base64 -d > .tmp-<clustername>/kubeconfig
+    ```
+
+    Confirm to user: "✅ Kubeconfig saved to: .tmp-<clustername>/kubeconfig"
+
+    **Note:** Temporary directories follow the pattern `.tmp-<clustername>` and are gitignored.
+
 11. command finished
