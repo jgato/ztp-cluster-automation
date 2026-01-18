@@ -13,9 +13,9 @@ During the GitOps tasks, these would be done over different ArgoCD instances, in
 in the different RHACM hubs.
 
 By the moment we have:
- * hub-2: openshift-gitops-server-openshift-gitops.apps.hub-2.el8k.se-lab.eng.rdu2.dc.redhat.com
- * hub-1: openshift-gitops-server-openshift-gitops.apps.hub-2.el8k.se-lab.eng.rdu2.dc.redhat.com
- * multinode-1: openshift-gitops-server-openshift-gitops.apps.multinode-1.spoke-mno.el8k.se-lab.eng.rdu2.dc.redhat.com/
+ * hub-2: openshift-gitops-server-openshift-gitops.apps.hub-2.example.com
+ * hub-1: openshift-gitops-server-openshift-gitops.apps.hub-1.example.com
+ * multinode-1: openshift-gitops-server-openshift-gitops.apps.multinode-1.example.com
 
 Use these endpoint together with the argocd cli to interact with the proper GitOps server
 ArgoCD cli always use the --insecure param to access the endpoint witn a self-signed certificate
