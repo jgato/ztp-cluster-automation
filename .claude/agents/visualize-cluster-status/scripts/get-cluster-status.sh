@@ -39,16 +39,16 @@ echo "CLUSTER_NOT_DEPLOYED=false"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COLLECTOR_SCRIPT="$SCRIPT_DIR/collect-resource-data.sh"
 
-# Determine project root (3 levels up from .claude/skills/visualize-cluster-status)
+# Determine project root (3 levels up from .claude/agents/visualize-cluster-status)
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-TEMP_BASE="$PROJECT_ROOT/.temp/visualize-cluster-status"
+TEMP_BASE="$PROJECT_ROOT/.temp/visualize-cluster-status-$CLUSTER_NAME"
 
 if [ ! -x "$COLLECTOR_SCRIPT" ]; then
     echo "Error: collect-resource-data.sh not found or not executable at $COLLECTOR_SCRIPT" >&2
     exit 1
 fi
 
-# Create temporary directory for parallel results with unique name
+# Create temporary directory for parallel results with unique name including cluster name
 mkdir -p "$TEMP_BASE"
 TMPDIR=$(mktemp -d "$TEMP_BASE/get-status-$$-XXXXXX")
 trap "rm -rf $TMPDIR" EXIT

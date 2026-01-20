@@ -21,11 +21,11 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GET_STATUS_SCRIPT="$SCRIPT_DIR/get-cluster-status.sh"
 
-# Determine project root (3 levels up from .claude/skills/visualize-cluster-status)
+# Determine project root (3 levels up from .claude/agents/visualize-cluster-status)
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-TEMP_BASE="$PROJECT_ROOT/.temp/visualize-cluster-status"
+TEMP_BASE="$PROJECT_ROOT/.temp/visualize-cluster-status-$CLUSTER_NAME"
 
-# Create temp directory if it doesn't exist
+# Create temp directory if it doesn't exist (includes cluster name to avoid conflicts)
 mkdir -p "$TEMP_BASE"
 
 if [ ! -x "$GET_STATUS_SCRIPT" ]; then

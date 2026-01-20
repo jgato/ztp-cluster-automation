@@ -101,18 +101,24 @@ Synchronizes an ArgoCD application on a specific hub instance using SSO authenti
 Complete workflow to redeploy a ZTP cluster. Removes cluster, waits for cleanup, restores secrets, and redeploys.
 - **Arguments:** Single cluster name (one cluster per request)
 
-#### telco_hub_rds_status
-Displays comprehensive status of a Telco Hub RDS cluster including operator versions and CR statuses.
-- **Arguments:** Single cluster name (one cluster per request)
-
-### Skills
+### Subagents
 
 #### visualize-cluster-status
-This skill is key and it always used to show the current status of any cluster, in any moment, or during installation,
+This subagent is key and it's always used to show the current status of any cluster, in any moment, or during installation,
 or removal, etc.
 Displays comprehensive status of ZTP/RHACM clusters including ClusterInstance, installation progress, agents, and related resources.
+- **Type:** Specialized read-only subagent with restricted permissions
 - **Triggers:** "show cluster status", "check cluster", "monitor cluster", "cluster installation progress"
 - **Scripts:** Uses `get-cluster-status.sh` for one-time checks or `monitor-cluster.sh` for continuous monitoring
+- **Location:** `.claude/agents/visualize-cluster-status/`
+
+#### telco-hub-rds-status
+This subagent displays comprehensive status of Telco Hub RDS clusters configured via GitOps.
+Shows operator versions and CR statuses with parallel data collection for maximum performance.
+- **Type:** Specialized read-only subagent with restricted permissions
+- **Triggers:** "show hub status", "check hub", "telco hub status", "hub rds status"
+- **Scripts:** Uses `get-operator-versions.sh` and `get-cr-statuses.sh` in parallel
+- **Location:** `.claude/agents/telco-hub-rds-status/`
 
 ### Helper Scripts
 
@@ -134,7 +140,7 @@ Checks KUBECONFIG variable and verifies OpenShift connectivity. Expands `~` to a
 - **Exit codes:** 0 (success), 1 (KUBECONFIG not set), 2 (cluster unreachable)
 
 #### Visualize Cluster Status Scripts
-Located in `.claude/skills/visualize-cluster-status/`:
+Located in `.claude/agents/visualize-cluster-status/scripts/`:
 - **get-cluster-status.sh** - One-time status check with parallel data gathering
 - **monitor-cluster.sh** - Continuous monitoring for installation progress
 - **collect-resource-data.sh** - Low-level data collection utility

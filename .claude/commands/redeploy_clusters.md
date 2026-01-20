@@ -14,11 +14,9 @@ Follow these steps:
     * Secrets exists in the namespace with the name of the cluster.
     * Store the screts in the remporal directory.
 2. Invoke /remove_clusters with the cluster name
-3. Wait the cluster removal. If the cluster has not been removed. Use the skill visualize-cluster-status to show cluster
-   removal process. Do not do any other extra checks. Only use the skill visualize-cluster-status to show the cluster
-   removal process. Check it every 5 minutes until the cluster is removed.
+3. Wait the /remove_clusters to finish. Do nothing until it finishes. When it finishes, it means the cluster was
+   removed. So go to the next step. If it was not removed correctly, return with the error.
 4. If the Namespace of the cluster was removed, create it again, and restore there the copy of the secrets from step 0.
 5. Invoke /deploy_clusters with the cluster name
-6. Wait the cluster to be created. Use the skill visualize-cluster-status to show cluster installation process.
-   Do not do any other extra checks. Only use the skill visualize-cluster-status to show the cluster installation process. Check it every 5 minutes until the cluster is created.
+6. Wait the /deploy_clusters to finish. Do nothing until it finishes. When it finishes, it means the cluster was installed. If it was not, return with the error.
 7. Exit command
