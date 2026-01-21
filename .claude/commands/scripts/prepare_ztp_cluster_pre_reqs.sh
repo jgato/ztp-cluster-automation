@@ -33,7 +33,6 @@ if [ $? -ne 0 ]; then
     echo "❌ Operación cancelada por el usuario."
     exit 1
 fi
-echo ${CREDENTIALS}
 IFS='|' read -r USERNAME PASSWORD <<< "$CREDENTIALS"
 PASSWORD=$(echo ${PASSWORD} | base64)
 USERNAME=$(echo ${USERNAME} | base64)
