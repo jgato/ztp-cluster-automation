@@ -24,7 +24,8 @@ Follow these steps:
    - If script exits with code 2 (connectivity failed): Notify the user that the cluster is not reachable. Prompt the user to provide a new KUBECONFIG path, set it, then re-run the script.
    - If script exits with code 0: Continue to next step
 
-2. Check if in the context we have a hub selected. Show the user the hub that is going to be used, and prompt the user to select a different one. Use the list of available ones from the ARGOCD_HUBS.md file if it exists, otherwise ask the user to provide the hub endpoint manually.
+2. Now we will configure the argocd endpoint that we will use to interact with any argocd command. 
+   ```
+     oc  get route openshift-gitops-server -n openshift-gitops -o jsonpath='{.spec.host}'
+   ```
 
-From now on, whatever `oc` command will use the KUBECONFIG from the env variable or the context.
-From now on, whatever `oc` command will be invoked with `--kubeconfig` param and that KUBECONFIG information.

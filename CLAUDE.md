@@ -10,46 +10,11 @@ There is a `kustomization.yaml` that is used by Openshift GitOps operator (that 
 the different GitOps tasks. Adding/removing entries to the `kustomization.yaml` to manage your existing
 infrastructure with the GitOps way.
 
-## ArgoCD instances
+## ArgoCD interaction
 
-During the GitOps tasks, these would be done over different ArgoCD instances, installed
-in the different RHACM hubs.
+The ArgoCD endpoint is automatically configured by the `configure_environment` skill, which extracts it from the `openshift-gitops-server` Route in the `openshift-gitops` namespace.
 
-### Hub Configuration File
-
-**IMPORTANT:** Users should create a file named `ARGOCD_HUBS.md` in the project root directory to configure available ArgoCD hub instances. This file is **optional** but highly recommended as it helps the automation tools display default available hubs and their endpoints.
-
-**Example ARGOCD_HUBS.md structure:**
-
-```markdown
-# ArgoCD Hub Instances
-
-This file defines the available ArgoCD/OpenShift GitOps instances for this ZTP environment.
-
-## Available Hubs
-
-- **hub-1**
-  - Endpoint: openshift-gitops-server-openshift-gitops.apps.hub-1.example.com
-  - Description: Primary production hub
-
-- **hub-2**
-  - Endpoint: openshift-gitops-server-openshift-gitops.apps.hub-2.example.com
-  - Description: Secondary production hub
-
-- **multinode-1**
-  - Endpoint: openshift-gitops-server-openshift-gitops.apps.multinode-1.example.com
-  - Description: Multi-node test environment
-
-## Usage
-
-These endpoints are used with the ArgoCD CLI for GitOps operations.
 All ArgoCD commands should use `--insecure` and `--grpc-web` parameters.
-```
-
-**Note:** If `ARGOCD_HUBS.md` exists, automation tools will parse it to provide hub selection options and default values. If the file doesn't exist, users will need to manually specify hub endpoints.
-
-Use these endpoints together with the argocd cli to interact with the proper GitOps server.
-ArgoCD cli always use the --insecure param to access the endpoint witn a self-signed certificate
 
 ## Openshift interaction
 
@@ -64,11 +29,16 @@ The value for the param is coming from the kubeconfig path from an env variable 
 
 The `.claude/commands/` directory contains custom commands and scripts to automate ZTP cluster management tasks. These commands are integrated with Claude Code to streamline GitOps operations.
 
-### Available Commands
+### Available Skills
+
+Skills are located in `.claude/skills/<skill-name>/SKILL.md`.
 
 #### configure_environment
-Configures the environment for ZTP operations by setting up KUBECONFIG and hub selection.
+Configures the environment for ZTP operations by setting up KUBECONFIG and automatically extracting the ArgoCD endpoint from the cluster.
 - **Arguments:** None
+- **Location:** `.claude/skills/configure_environment/`
+
+### Available Commands
 
 #### prepare_clusters
 Prepares cluster pre-requirements before deployment. Creates namespace and required secrets (pull-secret and BMC credentials).
@@ -126,7 +96,7 @@ Collects CR statuses in parallel for Telco Hub RDS (MultiClusterHub, MultiCluste
 
 #### check_cluster_kubeconfig.sh
 Checks KUBECONFIG variable and verifies OpenShift connectivity. Expands `~` to absolute path.
-- **Location:** `.claude/commands/scripts/check_cluster_kubeconfig.sh`
+- **Location:** `.claude/skills/configure_environment/scripts/check_cluster_kubeconfig.sh`
 - **Exit codes:** 0 (success), 1 (KUBECONFIG not set), 2 (cluster unreachable)
 
 #### Visualize Cluster Status Scripts
@@ -140,7 +110,6 @@ Located in `.claude/agents/visualize-cluster-status/scripts/`:
 - **CRITICAL: All cluster operations accept ONLY ONE cluster per request. Never attempt to process multiple clusters in a single command invocation.**
 - When executing any script never use `cd` command to move to the directory of the script. Execute including the path
 - When executing script never call with env variables as prefix
-- All ArgoCD commands use `--insecure` and `--grpc-web` parameters
 - **CRITICAL: All `oc` commands MUST have `--kubeconfig <path>` as the FIRST parameter immediately after `oc`**
   - The configured KUBECONFIG exists in the context or as an env variable
   - **Correct format:** `oc --kubeconfig <path> <VERB> <arguments>`
