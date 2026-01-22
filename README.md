@@ -143,7 +143,7 @@ Output:
 ### Redeploy Cluster (Full Lifecycle)
 
 ```bash
-/redeploy_clusters vsno5
+/redeploy_cluster vsno5
 ```
 
 This performs a complete removal and fresh deployment with secret preservation.

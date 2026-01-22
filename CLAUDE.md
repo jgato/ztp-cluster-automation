@@ -53,11 +53,10 @@ Complete GitOps workflow to remove a ZTP cluster. Comments out entry in kustomiz
 - **Arguments:** Single cluster name (one cluster per request)
 - **Location:** `.claude/skills/remove_cluster/`
 
-### Available Commands
-
-#### redeploy_clusters
+#### redeploy_cluster
 Complete workflow to redeploy a ZTP cluster. Removes cluster, waits for cleanup, restores secrets, and redeploys.
 - **Arguments:** Single cluster name (one cluster per request)
+- **Location:** `.claude/skills/redeploy_cluster/`
 
 ### Subagents
 
