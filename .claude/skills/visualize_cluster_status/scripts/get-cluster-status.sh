@@ -39,7 +39,7 @@ echo "CLUSTER_NOT_DEPLOYED=false"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COLLECTOR_SCRIPT="$SCRIPT_DIR/collect-resource-data.sh"
 
-# Determine project root (3 levels up from .claude/agents/visualize-cluster-status)
+# Determine project root (3 levels up from .claude/skills/visualize_cluster_status)
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 TEMP_BASE="$PROJECT_ROOT/.temp/visualize-cluster-status-$CLUSTER_NAME"
 

@@ -58,24 +58,22 @@ Complete workflow to redeploy a ZTP cluster. Removes cluster, waits for cleanup,
 - **Arguments:** Single cluster name (one cluster per request)
 - **Location:** `.claude/skills/redeploy_cluster/`
 
-### Subagents
-
-#### visualize-cluster-status
-This subagent is key and it's always used to show the current status of any cluster, in any moment, or during installation,
+#### visualize_cluster_status
+This skill is key and it's always used to show the current status of any cluster, in any moment, or during installation,
 or removal, etc.
 Displays comprehensive status of ZTP/RHACM clusters including ClusterInstance, installation progress, agents, and related resources.
-- **Type:** Specialized read-only subagent with restricted permissions
+- **Type:** Specialized read-only skill with restricted permissions
 - **Triggers:** "show cluster status", "check cluster", "monitor cluster", "cluster installation progress"
 - **Scripts:** Uses `get-cluster-status.sh` for one-time checks or `monitor-cluster.sh` for continuous monitoring
-- **Location:** `.claude/agents/visualize-cluster-status/`
+- **Location:** `.claude/skills/visualize_cluster_status/`
 
-#### telco-hub-rds-status
-This subagent displays comprehensive status of Telco Hub RDS clusters configured via GitOps.
+#### telco_hub_rds_status
+This skill displays comprehensive status of Telco Hub RDS clusters configured via GitOps.
 Shows operator versions and CR statuses with parallel data collection for maximum performance.
-- **Type:** Specialized read-only subagent with restricted permissions
+- **Type:** Specialized read-only skill with restricted permissions
 - **Triggers:** "show hub status", "check hub", "telco hub status", "hub rds status"
 - **Scripts:** Uses `get-operator-versions.sh` and `get-cr-statuses.sh` in parallel
-- **Location:** `.claude/agents/telco-hub-rds-status/`
+- **Location:** `.claude/skills/telco_hub_rds_status/`
 
 ### Helper Scripts
 
@@ -84,24 +82,21 @@ Creates required Kubernetes secrets for ZTP cluster deployment (pull-secret and 
 - **Location:** `.claude/skills/deploy_cluster/scripts/prepare_ztp_cluster_pre_reqs.sh`
 - **Usage:** `./prepare_ztp_cluster_pre_reqs.sh <NAMESPACE> <KUBECONFIG>`
 
-#### get-operator-versions.sh
-Collects operator versions in parallel for Telco Hub RDS (ACM, TALM, GitOps). Outputs JSON files.
-- **Usage:** `./get-operator-versions.sh <kubeconfig-path> [output-dir]`
-
-#### get-cr-statuses.sh
-Collects CR statuses in parallel for Telco Hub RDS (MultiClusterHub, MultiClusterEngine, MultiClusterObservability, AgentServiceConfig).
-- **Usage:** `./get-cr-statuses.sh <kubeconfig-path> [output-dir]`
-
 #### check_cluster_kubeconfig.sh
 Checks KUBECONFIG variable and verifies OpenShift connectivity. Expands `~` to absolute path.
 - **Location:** `.claude/skills/configure_environment/scripts/check_cluster_kubeconfig.sh`
 - **Exit codes:** 0 (success), 1 (KUBECONFIG not set), 2 (cluster unreachable)
 
 #### Visualize Cluster Status Scripts
-Located in `.claude/agents/visualize-cluster-status/scripts/`:
+Located in `.claude/skills/visualize_cluster_status/scripts/`:
 - **get-cluster-status.sh** - One-time status check with parallel data gathering
 - **monitor-cluster.sh** - Continuous monitoring for installation progress
 - **collect-resource-data.sh** - Low-level data collection utility
+
+#### Telco Hub RDS Status Scripts
+Located in `.claude/skills/telco_hub_rds_status/scripts/`:
+- **get-operator-versions.sh** - Collects operator versions in parallel for Telco Hub RDS (ACM, TALM, GitOps)
+- **get-cr-statuses.sh** - Collects CR statuses in parallel (MultiClusterHub, MultiClusterEngine, MultiClusterObservability, AgentServiceConfig)
 
 
 ### Usage Notes
