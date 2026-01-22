@@ -38,6 +38,11 @@ Configures the environment for ZTP operations by setting up KUBECONFIG and autom
 - **Arguments:** None
 - **Location:** `.claude/skills/configure_environment/`
 
+#### sync_argocd
+Synchronizes an ArgoCD application on a hub instance using SSO authentication.
+- **Arguments:** ArgoCD endpoint, application name, optional prune flag
+- **Location:** `.claude/skills/sync_argocd/`
+
 ### Available Commands
 
 #### prepare_clusters
@@ -52,10 +57,6 @@ Complete GitOps workflow to deploy a ZTP cluster. Prepares cluster, updates kust
 #### remove_clusters
 Complete GitOps workflow to remove a ZTP cluster. Comments out entry in kustomization.yaml, commits, pushes, and syncs with prune.
 - **Arguments:** Single cluster name (one cluster per request)
-
-#### synch_clusters
-Synchronizes an ArgoCD application on a specific hub instance using SSO authentication.
-- **Arguments:** ArgoCD endpoint, application name, optional prune flag
 
 #### redeploy_clusters
 Complete workflow to redeploy a ZTP cluster. Removes cluster, waits for cleanup, restores secrets, and redeploys.

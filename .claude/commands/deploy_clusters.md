@@ -30,7 +30,7 @@ After any skill/sub-command/sub-agent completes, I must immediately check my tod
 
 6. Git push to origin main.
 
-7. Use the command `/sync_clusters` to sync argocd application. Use the params: hub endpoint and "clusters" as application name. When finishes continue to next step.
+7. Use the skill `/sync_argocd` to sync argocd application. Use the params: hub endpoint and "clusters" as application name. When finishes continue to next step.
 
 8. Monitor installation using `visualize-cluster-status` subagent until ManagedCluster is available and joined.
    

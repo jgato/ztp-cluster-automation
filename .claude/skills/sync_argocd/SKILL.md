@@ -1,8 +1,15 @@
-# Synch ZTP clusters
+---
+name: sync_argocd
+description: Synchronize an ArgoCD application on a hub instance using SSO authentication
+allowed-tools: Bash(argocd:*)
+model: haiku
+---
+
+# Sync ArgoCD Application
 
 Sync an ArgoCD application on a hub instance.
 
-Takes #$ARGUMENTS:
+Takes $ARGUMENTS:
 1. ArgoCD endpoint (required)
 2. Application name (required)
 3. Prune flag (optional) - if present, sync with `--prune`

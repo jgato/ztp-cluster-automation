@@ -16,7 +16,7 @@ Follow these steps:
 3. Comment the entry for the cluster. Pretty printout changes
 4. Use git to create a new commit with a message "removing cluster " and the cluster name that has been removed
 5. Do a git push over origin and main branch
-6. Synch ArgoCD "clusters" application in the proper hub, pass the command the arguments: 1st one the hub endpoint, 2nd
+6. Use the skill `/sync_argocd` to sync the "clusters" application in the proper hub. Pass the arguments: 1st one the hub endpoint, 2nd
    one the ArgoCD application that is called "clusters" by default.
 7. Monitor cluster installation status by using the `visualize-cluster-status` subagent.
    **CRITICAL: You MUST use ONLY the visualize-cluster-status subagent to check status. DO NOT use direct oc commands.**
