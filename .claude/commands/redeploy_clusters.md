@@ -14,9 +14,13 @@ Follow these steps:
     * Secrets exists in the namespace with the name of the cluster.
     * Store the screts in the remporal directory.
 2. Invoke /remove_clusters with the cluster name
-3. Wait the /remove_clusters to finish. Do nothing until it finishes. When it finishes, it means the cluster was
-   removed. So go to the next step. If it was not removed correctly, return with the error.
-4. If the Namespace of the cluster was removed, create it again, and restore there the copy of the secrets from step 0.
+3. The /remove_clusters command will handle the entire removal process including monitoring until complete.
+   When the /remove_clusters command exits/completes successfully, the cluster has been removed.
+   If /remove_clusters exits with an error, abort the redeploy and report the error.
+4. After /remove_clusters completes successfully, check if the Namespace of the cluster was removed. If yes, create it again and restore the copy of the secrets from step 0.
 5. Invoke /deploy_clusters with the cluster name
-6. Wait the /deploy_clusters to finish. Do nothing until it finishes. When it finishes, it means the cluster was installed. If it was not, return with the error.
-7. Exit command
+6. The /deploy_clusters command will handle the entire deployment process including monitoring until complete.
+   When the /deploy_clusters command exits/completes successfully, the cluster has been deployed.
+   **IMPORTANT: Do NOT exit the redeploy command. Immediately continue to step 7.**
+   If /deploy_clusters exits with an error, abort the redeploy and report the error.
+7. Report successful redeployment completion to the user and exit the redeploy command

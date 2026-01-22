@@ -175,14 +175,10 @@ The `get-cluster-status.sh` script automatically handles this:
    The cluster <cluster-name> is **not currently deployed** on the hub.
 
    **Findings:**
-   - ❌ ClusterInstance CR: **NOT FOUND** in namespace <cluster-name>
+   - ❌ ClusterInstance CR: **NOT FOUND YET** in namespace <cluster-name>
+   ```
 
-   ## Next Steps
-   To deploy this cluster, use:
-   ```
-   /deploy_clusters <cluster-name>
-   ```
-   ```
+   Dont do any extra investigation, troubleshooting or debugging.
 
 2. **If the ClusterInstance EXISTS**, the script returns all resource data:
    - Proceed with the full status visualization as detailed below

@@ -1,67 +1,63 @@
 # Deploy ZTP cluster by name
+
 The name of the cluster is provided by #$ARGUMENTS. Only one cluster can be deployed per request.
 Show a summary of the cluster to be deployed.
 
-Follow these steps:
-0. Invoke the prepare_clusters command in the context of cluster preparation for deployment
-1. In the `kustomization.yaml`, check if this entry is already there and it is not commented. If so, notify the user about it and do nothing
-   and exit.
-2. Check the name of the cluster exists, and there is a manifest with this name, that contains a yaml with a Kind
-   ClusterInstance
-3. Call the command prepare_clusters to satisfy pre-requirements. This command will create a pull
-   secret and the needed bmc credentials, to trigger the installation by the RHACM Assisted Service.
-4. Add the entry for the cluster to the kustomization.yaml, or uncomment it if it was
-   commented. Pretty printout changes
-5. Use git to create a new commit with a message "adding cluster " and the cluster name that has been added
-6. Do a git push over origin and main branch
-7. Synch ArgoCD "clusters" application in the proper hub, pass the command the arguments: 1st one the hub endpoint, 2nd
-   one the ArgoCD application that is called "clusters" by default.
-8. Monitor cluster installation status by using the `visualize-cluster-status` subagent with adaptive check intervals until the
-   ManagedCluster CR status is available and joined.
-   **CRITICAL: You MUST use ONLY the visualize-cluster-status subagent to check status. DO NOT use direct oc commands.**
-   **IMPORTANT: Wait for a MAXIMUM of 3 hours (180 minutes) for the cluster to become available.**
+## ⚠️ THIS IS A PARENT WORKFLOW
 
-   ### Adaptive Monitoring Process:
-   - Calculate elapsed time from the **ClusterInstance creation timestamp** (shown in subagent output as "Created:")
-     * This gives accurate installation time, not just monitoring time
-   - Use adaptive check intervals based on elapsed time since ClusterInstance creation:
-     * **0-20 minutes** (Early phase: provisioning, agents): Check every **5 minutes**
-     * **20-50 minutes** (Middle phase: ISO download, disk writing): Check every **15 minutes**
-     * **50+ minutes** (Final phase: cluster configuration): Check every **5 minutes**
+**You MUST execute ALL steps 1-11. Do NOT stop when a skill/sub-command/sub-agent completes.**
 
-   - At each check interval:
-     1. Invoke the Task tool with subagent_type="Explore" and prompt="visualize cluster status for <cluster-name>"
-     2. Wait for the subagent to complete and return its result
-     3. **IMMEDIATELY output the subagent's complete result to the user** - this is your ONLY response for this check
-        - The subagent returns beautifully formatted ASCII tables and status information
-        - DO NOT parse, interpret, or summarize this output
-        - DO NOT say "The cluster is installing" or similar - just show what the subagent returned
-        - The subagent's formatted output IS your answer to the user
-     4. After displaying the output:
-        - Extract the ClusterInstance "Created:" timestamp from the output
-        - Calculate elapsed time from that creation timestamp to now
-        - Check if ManagedCluster shows Available=True and Joined=True
-        - If yes: proceed to step 9
-        - If no: wait according to the adaptive interval schedule based on elapsed time and repeat
+After any skill/sub-command/sub-agent completes, I must immediately check my todo list:
+  - Mark the current todo as completed
+  - Mark the next todo as in_progress
+  - Immediately execute the next step
 
-   - If 3 hours is reached and cluster is NOT available and joined:
-     * Abort the wait immediately
-     * Use visualize-cluster-status subagent one final time and display its output
-     * Then notify user that deployment timeout was reached (3 hours)
-     * Skip steps 9-10 (password and kubeconfig extraction)
-     * Immediately invoke the redeploy_clusters command for this cluster
-     * Exit the deploy command
-9. Extract and save the kubeadmin password for the just created cluster. This is stored in the namespace of the cluster, in a
-   secret called 'clustername-admin-password'.
+## Steps
 
-   **IMPORTANT:** Create a temporary directory following the pattern `.tmp-<clustername>` in the project root (use `mkdir -p` to ensure it exists). The temporal directory is never created out
-   of the project scope.
-   Extract the password from the secret and save it to `.tmp-<clustername>/kubeadmin-password`.
-   Display the password to the user and confirm the file location.
-10. Extract the kubeconfig file for the just created cluster. This is stored in the namespace of the cluster, in a
-    secret called 'clustername-admin-kubeconfig'.
+1. In the `kustomization.yaml`, check if this entry is already there and not commented. If so, notify the user and finish this workflow.
 
-    Extract the kubeconfig from the secret and save it to `.tmp-<clustername>/kubeconfig`.
-    Confirm to the user the file location.
+2. Check the cluster manifest exists and contains a ClusterInstance Kind.
 
-11. command finished
+3. Gather secret information to inject for the cluster creation:
+   - Invoke script `.claude/commands/scripts/prepare_ztp_cluster_pre_reqs.sh <clustername> <kubeconfig>`. 
+   - Verify two secrets exist in the cluster namespace:
+      - `assisted-deployment-pull-secret`
+      - `<clustername>-bmc-secret`
+
+4. Add/uncomment the cluster entry in kustomization.yaml. Pretty printout changes.
+
+5. Git commit with message "adding cluster <clustername>".
+
+6. Git push to origin main.
+
+7. Use the command `/sync_clusters` to sync argocd application. Use the params: hub endpoint and "clusters" as application name. When finishes continue to next step.
+
+8. Monitor installation using `visualize-cluster-status` subagent until ManagedCluster is available and joined.
+   
+   **CRITICAL: Use ONLY the visualize-cluster-status subagent. DO NOT use direct oc commands.**
+   
+   **Maximum wait: 3 hours (180 minutes)**
+
+   Adaptive check intervals based on elapsed time from ClusterInstance creation:
+   - **0-20 min**: Check every 5 minutes
+   - **20-50 min**: Check every 15 minutes  
+   - **50+ min**: Check every 5 minutes
+
+   At each check:
+   - Invoke subagent for cluster status
+   - Output the subagent's complete result directly (don't summarize)
+   - Check if ManagedCluster shows Available=True and Joined=True
+   - If yes: proceed to step 9
+   - If no: wait and repeat
+
+   On 3-hour timeout:
+   - Show final status, notify user of timeout
+   - Skip steps 9-10, invoke `redeploy_clusters` and exit
+
+9. Extract kubeadmin password from secret `<clustername>-admin-password` in cluster namespace.
+   Save to `.tmp-<clustername>/kubeadmin-password`. Display password and file location.
+
+10. Extract kubeconfig from secret `<clustername>-admin-kubeconfig` in cluster namespace.
+    Save to `.tmp-<clustername>/kubeconfig`. Confirm file location.
+
+11. Report deployment complete.

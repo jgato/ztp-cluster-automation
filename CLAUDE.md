@@ -1,15 +1,5 @@
 # ClusterInstances dir/repository
 
-## Welcome Message
-
-**IMPORTANT:** At the start of each new conversation session, you MUST:
-1. Display a brief welcome message explaining this is a ZTP (Zero Touch Provisioning) cluster automation project using GitOps
-2. Check and display the current environment status:
-   - Execute `check_cluster_kubeconfig.sh` to verify KUBECONFIG is set and accessible
-   - Display the KUBECONFIG path if set (from environment variable)
-   - Indicate which hub is currently configured (if detectable from context)
-3. If KUBECONFIG is not set or cluster is unreachable, strongly suggest running `/configure_environment` to set up the environment
-4. Provide a brief reminder that all cluster operations (deploy, remove, redeploy) accept ONLY ONE cluster per request
 
 ## Project Overview
 
@@ -145,46 +135,8 @@ Located in `.claude/agents/visualize-cluster-status/scripts/`:
 - **monitor-cluster.sh** - Continuous monitoring for installation progress
 - **collect-resource-data.sh** - Low-level data collection utility
 
-### Command Workflow Examples
-
-**Deploying a cluster:**
-```bash
-# 1. Configure environment
-/configure_environment
-# 2. Deploy cluster (includes preparation)
-/deploy_clusters vsno5
-```
-
-**Removing a cluster:**
-```bash
-# 1. Ensure environment is configured
-# 2. Remove cluster
-/remove_clusters vsno5
-```
-
-**Manual sync:**
-```bash
-/synch_clusters
-# Will prompt for application and prune option
-```
-
-**Redeploying a cluster:**
-```bash
-/redeploy_clusters multinode-1
-```
-
-**Checking hub status:**
-```bash
-/telco_hub_rds_status hub-2
-```
-
-**Monitoring cluster installation:**
-```bash
-/visualize-cluster-status vsno5
-```
 
 ### Usage Notes
-
 - **CRITICAL: All cluster operations accept ONLY ONE cluster per request. Never attempt to process multiple clusters in a single command invocation.**
 - When executing any script never use `cd` command to move to the directory of the script. Execute including the path
 - When executing script never call with env variables as prefix
@@ -195,5 +147,4 @@ Located in `.claude/agents/visualize-cluster-status/scripts/`:
   - **NEVER use:** `oc get --kubeconfig <path>` or `oc <VERB> --kubeconfig <path>`
 - GitOps operations follow the pattern: modify kustomization.yaml → commit → push → sync ArgoCD app
 - Cluster operations are namespace-scoped (one namespace per cluster)
-- Commands are context-aware and validate state before executing operations
-- Failed operations abort immediately with explanatory messages
+

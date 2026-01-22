@@ -1,17 +1,19 @@
 #! /bin/bash
 
-if [ $# -lt 1 ]
+if [ $# -lt 2 ]
   then
-    echo "Usage: ./script.sh <NAMESPACE>"
+    echo "Usage: ./script.sh <NAMESPACE> <KUBECONFIG>"
     exit 1
 fi
 export CLUSTERNS=$1
 export BMCSECRET=$1
-echo ${CLUSTERNS}
+export KUBECONFIG=$2
+
+echo "KUBECONFIG: ${KUBECONFIG}"
 
 export PULLSECRETCONTENT=$(cat ~/.config/containers/auth.json)
 export PS64=$(echo -n ${PULLSECRETCONTENT} | base64 -w0)
-envsubst <<"EOF" | oc apply -f -
+envsubst <<"EOF" | oc --kubeconfig ${KUBECONFIG} apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
@@ -22,9 +24,6 @@ data:
 EOF
 
 echo "Now introduce the credentials for the BMC"
-#USERNAME=$(read -p 'Username: ' tmp; printf $tmp | base64)
-#PASSWORD=`read -s -p 'Password: ' tmp; printf $tmp | base64`
-#export PASSWORD=$(zenity --password --title="Auth"| base64)
 CREDENTIALS=$(zenity --forms --title="Login" \
     --text="Introduce BMC credentials for ${CLUSTERNS}" \
     --add-entry="Username" \
@@ -34,10 +33,10 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 IFS='|' read -r USERNAME PASSWORD <<< "$CREDENTIALS"
-PASSWORD=$(echo ${PASSWORD} | base64)
-USERNAME=$(echo ${USERNAME} | base64)
+export PASSWORD=$(echo -n ${PASSWORD} | base64 -w0)
+export USERNAME=$(echo -n ${USERNAME} | base64 -w0)
 
-oc apply -f - <<EOF
+envsubst <<"EOF" | oc --kubeconfig ${KUBECONFIG} apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
