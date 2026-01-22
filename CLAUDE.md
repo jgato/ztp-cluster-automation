@@ -29,9 +29,7 @@ The value for the param is coming from the kubeconfig path from an env variable 
 
 The `.claude/commands/` directory contains custom commands and scripts to automate ZTP cluster management tasks. These commands are integrated with Claude Code to streamline GitOps operations.
 
-### Available Skills
-
-Skills are located in `.claude/skills/<skill-name>/SKILL.md`.
+### Available commands
 
 #### configure_environment
 Configures the environment for ZTP operations by setting up KUBECONFIG and automatically extracting the ArgoCD endpoint from the cluster.
