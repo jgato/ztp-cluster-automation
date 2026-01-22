@@ -43,16 +43,12 @@ Synchronizes an ArgoCD application on a hub instance using SSO authentication.
 - **Arguments:** ArgoCD endpoint, application name, optional prune flag
 - **Location:** `.claude/skills/sync_argocd/`
 
-### Available Commands
-
-#### prepare_clusters
-Prepares cluster pre-requirements before deployment. Creates namespace and required secrets (pull-secret and BMC credentials).
-- **Arguments:** Single cluster name (one cluster per request)
-- **Note:** In removal context, exits immediately
-
-#### deploy_clusters
+#### deploy_cluster
 Complete GitOps workflow to deploy a ZTP cluster. Prepares cluster, updates kustomization.yaml, commits, pushes, and syncs ArgoCD.
 - **Arguments:** Single cluster name (one cluster per request)
+- **Location:** `.claude/skills/deploy_cluster/`
+
+### Available Commands
 
 #### remove_clusters
 Complete GitOps workflow to remove a ZTP cluster. Comments out entry in kustomization.yaml, commits, pushes, and syncs with prune.
@@ -85,7 +81,8 @@ Shows operator versions and CR statuses with parallel data collection for maximu
 
 #### prepare_ztp_cluster_pre_reqs.sh
 Creates required Kubernetes secrets for ZTP cluster deployment (pull-secret and BMC credentials).
-- **Usage:** `./prepare_ztp_cluster_pre_reqs.sh <NAMESPACE>`
+- **Location:** `.claude/skills/deploy_cluster/scripts/prepare_ztp_cluster_pre_reqs.sh`
+- **Usage:** `./prepare_ztp_cluster_pre_reqs.sh <NAMESPACE> <KUBECONFIG>`
 
 #### get-operator-versions.sh
 Collects operator versions in parallel for Telco Hub RDS (ACM, TALM, GitOps). Outputs JSON files.

@@ -96,7 +96,7 @@ ClusterInstance manifests are YAML files in the root directory (e.g., `vsno5.yam
 To add a new cluster:
 1. Create `<clustername>.yaml` with ClusterInstance CR
 2. Add entry to `kustomization.yaml` resources section
-3. Deploy using `/deploy_clusters <clustername>`
+3. Deploy using `/deploy_cluster <clustername>`
 
 ## Examples
 
@@ -107,7 +107,7 @@ To add a new cluster:
 /configure_environment
 
 # Deploy cluster
-/deploy_clusters vsno5
+/deploy_cluster vsno5
 
 # Wait for completion (automatic monitoring)
 # Credentials are displayed when ready

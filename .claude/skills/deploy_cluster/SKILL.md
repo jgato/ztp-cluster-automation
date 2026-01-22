@@ -1,9 +1,16 @@
+---
+name: deploy_cluster
+description: Complete GitOps workflow to deploy a ZTP cluster
+allowed-tools: Bash(git:*, oc:*, .claude/skills/deploy_cluster/scripts/*:*), Read, Edit, Write, Skill, Task
+model: sonnet
+---
+
 # Deploy ZTP cluster by name
 
-The name of the cluster is provided by #$ARGUMENTS. Only one cluster can be deployed per request.
+The name of the cluster is provided by $ARGUMENTS. Only one cluster can be deployed per request.
 Show a summary of the cluster to be deployed.
 
-## ⚠️ THIS IS A PARENT WORKFLOW
+## THIS IS A PARENT WORKFLOW
 
 **You MUST execute ALL steps 1-11. Do NOT stop when a skill/sub-command/sub-agent completes.**
 
@@ -19,7 +26,7 @@ After any skill/sub-command/sub-agent completes, I must immediately check my tod
 2. Check the cluster manifest exists and contains a ClusterInstance Kind.
 
 3. Gather secret information to inject for the cluster creation:
-   - Invoke script `.claude/commands/scripts/prepare_ztp_cluster_pre_reqs.sh <clustername> <kubeconfig>`. 
+   - Invoke script `.claude/skills/deploy_cluster/scripts/prepare_ztp_cluster_pre_reqs.sh <clustername> <kubeconfig>`.
    - Verify two secrets exist in the cluster namespace:
       - `assisted-deployment-pull-secret`
       - `<clustername>-bmc-secret`
@@ -33,14 +40,14 @@ After any skill/sub-command/sub-agent completes, I must immediately check my tod
 7. Use the skill `/sync_argocd` to sync argocd application. Use the params: hub endpoint and "clusters" as application name. When finishes continue to next step.
 
 8. Monitor installation using `visualize-cluster-status` subagent until ManagedCluster is available and joined.
-   
+
    **CRITICAL: Use ONLY the visualize-cluster-status subagent. DO NOT use direct oc commands.**
-   
+
    **Maximum wait: 3 hours (180 minutes)**
 
    Adaptive check intervals based on elapsed time from ClusterInstance creation:
    - **0-20 min**: Check every 5 minutes
-   - **20-50 min**: Check every 15 minutes  
+   - **20-50 min**: Check every 15 minutes
    - **50+ min**: Check every 5 minutes
 
    At each check:
@@ -52,7 +59,7 @@ After any skill/sub-command/sub-agent completes, I must immediately check my tod
 
    On 3-hour timeout:
    - Show final status, notify user of timeout
-   - Skip steps 9-10, invoke `redeploy_clusters` and exit
+   - Skip steps 9-10, invoke `/redeploy_cluster` and exit
 
 9. Extract kubeadmin password from secret `<clustername>-admin-password` in cluster namespace.
    Save to `.tmp-<clustername>/kubeadmin-password`. Display password and file location.
