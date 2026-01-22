@@ -48,11 +48,12 @@ Complete GitOps workflow to deploy a ZTP cluster. Prepares cluster, updates kust
 - **Arguments:** Single cluster name (one cluster per request)
 - **Location:** `.claude/skills/deploy_cluster/`
 
-### Available Commands
-
-#### remove_clusters
+#### remove_cluster
 Complete GitOps workflow to remove a ZTP cluster. Comments out entry in kustomization.yaml, commits, pushes, and syncs with prune.
 - **Arguments:** Single cluster name (one cluster per request)
+- **Location:** `.claude/skills/remove_cluster/`
+
+### Available Commands
 
 #### redeploy_clusters
 Complete workflow to redeploy a ZTP cluster. Removes cluster, waits for cleanup, restores secrets, and redeploys.

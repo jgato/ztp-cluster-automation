@@ -13,11 +13,11 @@ Follow these steps:
     * Make a copy of the secret 'clustername-bmc-secret'
     * Secrets exists in the namespace with the name of the cluster.
     * Store the screts in the remporal directory.
-2. Invoke /remove_clusters with the cluster name
-3. The /remove_clusters command will handle the entire removal process including monitoring until complete.
-   When the /remove_clusters command exits/completes successfully, the cluster has been removed.
-   If /remove_clusters exits with an error, abort the redeploy and report the error.
-4. After /remove_clusters completes successfully, check if the Namespace of the cluster was removed. If yes, create it again and restore the copy of the secrets from step 0.
+2. Invoke /remove_cluster with the cluster name
+3. The /remove_cluster command will handle the entire removal process including monitoring until complete.
+   When the /remove_cluster command exits/completes successfully, the cluster has been removed.
+   If /remove_cluster exits with an error, abort the redeploy and report the error.
+4. After /remove_cluster completes successfully, check if the Namespace of the cluster was removed. If yes, create it again and restore the copy of the secrets from step 0.
 5. Invoke /deploy_cluster with the cluster name
 6. The /deploy_cluster skill will handle the entire deployment process including monitoring until complete.
    When the /deploy_cluster skill exits/completes successfully, the cluster has been deployed.
