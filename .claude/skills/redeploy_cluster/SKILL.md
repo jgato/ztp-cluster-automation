@@ -25,7 +25,7 @@ After any skill completes, I must immediately check my todo list:
 
 ## Steps
 
-0. Make a temporal directory called "tmp-clustername"
+0. Make a temporal directory called ".temp/redeploy-<clustername>/"
 
 1. Then:
     * Make a copy of the secret 'assisted-deployment-pull-secret'

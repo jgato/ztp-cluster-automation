@@ -1,7 +1,7 @@
 ---
 name: deploy_cluster
 description: Complete GitOps workflow to deploy a ZTP cluster
-allowed-tools: Bash(git:*), Bash(oc --kubeconfig get secret:*), Bash(.claude/skills/deploy_cluster/scripts/prepare_stp_cluster_pre_reqs.sh:*), Skill(sync_argocd),Read, Edit
+allowed-tools: Bash(git:*), Bash(oc --kubeconfig get secret:*), Bash(.claude/skills/deploy_cluster/scripts/prepare_ztp_cluster_pre_reqs.sh:*), Skill(sync_argocd),Read, Edit
 model: sonnet
 ---
 
@@ -41,7 +41,7 @@ After any skill/sub-command/sub-agent completes, I must immediately check my tod
 
 8. Monitor installation using `visualize-cluster-status` skill until ManagedCluster is available and joined.
 
-   **CRITICAL: Use ONLY the visualize-cluster-status subagent. DO NOT use direct oc commands.**
+   **CRITICAL: Use ONLY the visualize-cluster-status subagent. DO NOT use direct oc commands.NEVER try to investigate what could be happening. NEVER do extra task if there are errors during the installation process**
 
    **Maximum wait: 3 hours (180 minutes)**
 
@@ -62,9 +62,9 @@ After any skill/sub-command/sub-agent completes, I must immediately check my tod
    - Skip steps 9-10, invoke `/redeploy_cluster` and exit
 
 9. Extract kubeadmin password from secret `<clustername>-admin-password` in cluster namespace.
-   Save to `.tmp-<clustername>/kubeadmin-password`. Display password and file location.
+   Save to `.temp/deploy-cluster-<clustername>/kubeadmin-password`. Display password and file location.
 
 10. Extract kubeconfig from secret `<clustername>-admin-kubeconfig` in cluster namespace.
-    Save to `.tmp-<clustername>/kubeconfig`. Confirm file location.
+    Save to `.temp/deploy-cluster-/kubeconfig`. Confirm file location.
 
 11. Report deployment complete.

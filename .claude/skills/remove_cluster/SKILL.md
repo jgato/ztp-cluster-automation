@@ -35,7 +35,7 @@ After any skill/sub-command/sub-agent completes, I must immediately check my tod
    one the ArgoCD application that is called "clusters" by default.
 
 7. Monitor cluster removal status by using the `visualize_cluster_status` skill.
-   **CRITICAL: You MUST use ONLY the visualize-cluster-status subagent to check status. DO NOT use direct oc commands.**
+   **CRITICAL: You MUST use ONLY the visualize-cluster-status skill to check status. DO NOT use direct oc commands.NEVER try to investigate what could be happening. NEVER do extra task if there are errors during the removal process**
    ### Monitoring Process:
    - Check every **5 minutes**:
      1. Show cluster status
