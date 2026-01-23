@@ -1,7 +1,7 @@
 ---
 name: configure_environment
 description: Configure environment for ZTP operations by setting up KUBECONFIG and hub selection
-allowed-tools: Bash, Read, AskUserQuestion
+allowed-tools: Bash(.claude/skills/configure_environment/scripts/check_cluster_kubeconfig.sh:*)
 model: haiku
 ---
 
@@ -19,13 +19,13 @@ When the user is prompted to provide a KUBECONFIG show some example and instruct
 
 Follow these steps:
 
-1. Execute the `check_cluster_kubeconfig.sh` script from the `scripts` directory within this skill
+1. Execute the `.claude/skills/configure_environment/scripts/check_cluster_kubeconfig.sh` script, and pass the KUBECONFIG as a param.
    - If script exits with code 1 (KUBECONFIG not set): Prompt the user to provide the KUBECONFIG path, set it, then re-run the script
    - If script exits with code 2 (connectivity failed): Notify the user that the cluster is not reachable. Prompt the user to provide a new KUBECONFIG path, set it, then re-run the script.
    - If script exits with code 0: Continue to next step
 
 2. Now we will configure the argocd endpoint that we will use to interact with any argocd command. 
    ```
-     oc  get route openshift-gitops-server -n openshift-gitops -o jsonpath='{.spec.host}'
+     oc --kubeconfig <KUBECONFIG> get route openshift-gitops-server -n openshift-gitops -o jsonpath='{.spec.host}'
    ```
 

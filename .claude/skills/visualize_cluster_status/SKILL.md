@@ -1,7 +1,6 @@
 ---
 name: visualize-cluster-status
 description: Display comprehensive status of ZTP/RHACM clusters including ClusterInstance, installation progress, agents, and all related resources.
-allowed-tools: Write(.temp/**), Bash(.claude/skills/visualize_cluster_status/scripts/*:*)
 model: haiku
 ---
 
@@ -56,6 +55,10 @@ Denied:
 ```
 
 This script:
+- Always call the script with a realtive path to the project. 
+  - CORRECT: `.claude/skills/visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name> <kubeconfig>`
+  - NOT CORRECT: `/home/user/project/.claude/skills/visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name>`
+- Never export the KUBECONFIG before calling the script. The KUBECONFIG is passed as the second param.
 - Performs parallel data gathering for all cluster resources
 - Handles ClusterInstance existence check automatically
 - Creates temporary files in `.temp/visualize-cluster-status-<cluster-name>/`

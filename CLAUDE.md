@@ -99,8 +99,14 @@ Located in `.claude/skills/telco_hub_rds_status/scripts/`:
 
 ### Usage Notes
 - **CRITICAL: All cluster operations accept ONLY ONE cluster per request. Never attempt to process multiple clusters in a single command invocation.**
-- When executing any script never use `cd` command to move to the directory of the script. Execute including the path
-- When executing script never call with env variables as prefix
+- Some rules before executing an script:
+  - When executing any script never use `cd` command to move to the directory of the script. Execute including the path.
+  - Always call the script with a realtive path to the project. 
+    - CORRECT: `.claude/skills/visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name> <kubeconfig>`
+    - NOT CORRECT: `./.claude/skills/visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name> <kubeconfig>`
+    - NOT CORRECT: `/home/user/project/.claude/skills/visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name>`
+  - Never export the KUBECONFIG before calling the script. The KUBECONFIG is passed as the second param.
+  - When executing script never call with env variables as prefix
 - **CRITICAL: All `oc` commands MUST have `--kubeconfig <path>` as the FIRST parameter immediately after `oc`**
   - The configured KUBECONFIG exists in the context or as an env variable
   - **Correct format:** `oc --kubeconfig <path> <VERB> <arguments>`
