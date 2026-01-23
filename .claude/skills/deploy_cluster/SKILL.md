@@ -1,7 +1,7 @@
 ---
 name: deploy_cluster
 description: Complete GitOps workflow to deploy a ZTP cluster
-allowed-tools: Bash(git:*, oc:*, .claude/skills/deploy_cluster/scripts/*:*), Read, Edit, Write, Skill, Task
+allowed-tools: Bash(git:*), Bash(oc --kubeconfig get secret:*), Bash(.claude/skills/deploy_cluster/scripts/prepare_stp_cluster_pre_reqs.sh:*), Skill(sync_argocd),Read, Edit
 model: sonnet
 ---
 

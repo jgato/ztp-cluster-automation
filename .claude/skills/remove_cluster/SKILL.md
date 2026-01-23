@@ -1,7 +1,7 @@
 ---
 name: remove_cluster
 description: Complete GitOps workflow to remove a ZTP cluster
-allowed-tools: Bash(git:*, oc:*), Read, Edit, Skill, Task
+allowed-tools: Bash(git:*), Read, Edit, Skill(sync_argocd), Skill(visualize_cluster_status)
 model: sonnet
 ---
 
@@ -23,8 +23,7 @@ After any skill/sub-command/sub-agent completes, I must immediately check my tod
 
 1. Check the provided name exists in the `kustomization.yaml` in the section resources.
 
-2. Check this entry is not already commented. If it is commented, notify the user about it and do nothing
-   and exit.
+2. Check this entry is not already commented. If it is commented, notify the user about it and do nothing and exit.
 
 3. Comment the entry for the cluster. Pretty printout changes.
 
@@ -32,10 +31,10 @@ After any skill/sub-command/sub-agent completes, I must immediately check my tod
 
 5. Do a git push over origin and main branch.
 
-6. Use the skill `/sync_argocd` to sync the "clusters" application in the proper hub. Pass the arguments: 1st one the hub endpoint, 2nd
+6. Use the skill `sync_argocd` to sync the "clusters" application in the proper hub. Pass the arguments: 1st one the hub endpoint, 2nd
    one the ArgoCD application that is called "clusters" by default.
 
-7. Monitor cluster removal status by using the `visualize-cluster-status` skill.
+7. Monitor cluster removal status by using the `visualize_cluster_status` skill.
    **CRITICAL: You MUST use ONLY the visualize-cluster-status subagent to check status. DO NOT use direct oc commands.**
    ### Monitoring Process:
    - Check every **5 minutes**:

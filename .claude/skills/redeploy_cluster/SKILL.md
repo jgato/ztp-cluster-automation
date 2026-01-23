@@ -1,7 +1,7 @@
 ---
 name: redeploy_cluster
 description: Complete workflow to redeploy a ZTP cluster with secret preservation
-allowed-tools: Bash(oc:*, mkdir:*), Read, Write, Skill
+allowed-tools: Bash(mkdir .temp/**/*:*), Write(.temp/**/*), Skill(remove_cluster), Skill(deploy_cluster)
 model: sonnet
 ---
 
