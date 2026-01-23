@@ -39,7 +39,7 @@ After any skill/sub-command/sub-agent completes, I must immediately check my tod
 
 7. Use the skill `/sync_argocd` to sync argocd application. Use the params: hub endpoint and "clusters" as application name. When finishes continue to next step.
 
-8. Monitor installation using `visualize-cluster-status` subagent until ManagedCluster is available and joined.
+8. Monitor installation using `visualize-cluster-status` skill until ManagedCluster is available and joined.
 
    **CRITICAL: Use ONLY the visualize-cluster-status subagent. DO NOT use direct oc commands.**
 
@@ -51,8 +51,8 @@ After any skill/sub-command/sub-agent completes, I must immediately check my tod
    - **50+ min**: Check every 5 minutes
 
    At each check:
-   - Invoke subagent for cluster status
-   - Output the subagent's complete result directly (don't summarize)
+   - Invoke skill for cluster status
+   - Output the skill's complete result directly (don't summarize)
    - Check if ManagedCluster shows Available=True and Joined=True
    - If yes: proceed to step 9
    - If no: wait and repeat
