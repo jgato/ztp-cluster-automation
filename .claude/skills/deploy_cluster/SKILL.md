@@ -26,6 +26,7 @@ After any skill/sub-command/sub-agent completes, I must immediately check my tod
 2. Check the cluster manifest exists and contains a ClusterInstance Kind.
 
 3. Gather secret information to inject for the cluster creation:
+   - Check the Namespace with the clustername exists. If not, create it.
    - Invoke script `.claude/skills/deploy_cluster/scripts/prepare_ztp_cluster_pre_reqs.sh <clustername> <kubeconfig>`.
    - Verify two secrets exist in the cluster namespace:
       - `assisted-deployment-pull-secret`
