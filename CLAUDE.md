@@ -32,8 +32,8 @@ The `.claude/commands/` directory contains custom commands and scripts to automa
 ### Available commands
 
 #### configure_environment
-Configures the environment for ZTP operations by setting up KUBECONFIG and automatically extracting the ArgoCD endpoint from the cluster.
-- **Arguments:** None
+Configures the environment for ZTP operations by validating KUBECONFIG and extracting the ArgoCD endpoint from the cluster.
+- **Arguments:** KUBECONFIG path (required, absolute path, no `~`)
 - **Location:** `.claude/skills/configure_environment/`
 
 #### sync_argocd
@@ -81,9 +81,10 @@ Creates required Kubernetes secrets for ZTP cluster deployment (pull-secret and 
 - **Usage:** `./prepare_ztp_cluster_pre_reqs.sh <NAMESPACE> <KUBECONFIG>`
 
 #### check_cluster_kubeconfig.sh
-Checks KUBECONFIG variable and verifies OpenShift connectivity. Expands `~` to absolute path.
+Verifies OpenShift connectivity using provided kubeconfig.
 - **Location:** `.claude/skills/configure_environment/scripts/check_cluster_kubeconfig.sh`
-- **Exit codes:** 0 (success), 1 (KUBECONFIG not set), 2 (cluster unreachable)
+- **Usage:** `./check_cluster_kubeconfig.sh <kubeconfig-path>`
+- **Exit codes:** 0 (cluster reachable), 1 (cluster not reachable)
 
 #### Visualize Cluster Status Scripts
 Located in `.claude/skills/visualize_cluster_status/scripts/`:

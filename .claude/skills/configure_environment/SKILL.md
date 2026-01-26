@@ -7,25 +7,35 @@ model: haiku
 
 # Configure environment for ZTP
 
-Configure environment to later do whatever other GitOps operations over
-the clusters. This command makes you to select the proper Kubeconfig to use,
-the hub endpoint.
+Configure environment for GitOps operations over clusters.
 
-It takes no arguments. If arguments are provided, notify that the
-command does not use arguments.
+## Arguments
 
-If in the context we have kubeconfig with a path including '~', convert it to an absolute path.
-When the user is prompted to provide a KUBECONFIG show some example and instruct it to only use absolute paths. It cannot use '~'.
+Takes one required argument: **KUBECONFIG** path (absolute path, no `~`)
 
-Follow these steps:
+If argument is missing or uses `~`, return **1** with usage instructions.
 
-1. Execute the `.claude/skills/configure_environment/scripts/check_cluster_kubeconfig.sh` script, and pass the KUBECONFIG as a param.
-   - If script exits with code 1 (KUBECONFIG not set): Prompt the user to provide the KUBECONFIG path, set it, then re-run the script
-   - If script exits with code 2 (connectivity failed): Notify the user that the cluster is not reachable. Prompt the user to provide a new KUBECONFIG path, set it, then re-run the script.
-   - If script exits with code 0: Continue to next step
+## Return Codes
 
-2. Now we will configure the argocd endpoint that we will use to interact with any argocd command. 
+- **0**: Success. Environment configured.
+- **1**: Error. Missing argument, file not found, or connectivity failed.
+
+## Steps
+
+1. Validate argument:
+   - If no KUBECONFIG argument provided: return **1** with message "Usage: configure_environment <kubeconfig-path>"
+   - If path contains `~`: return **1** with message "Use absolute path, not ~"
+
+2. Check file exists:
+   - If file does not exist: return **1** with message "File not found: <path>"
+
+3. Check connectivity using script:
+   - Execute `.claude/skills/configure_environment/scripts/check_cluster_kubeconfig.sh <KUBECONFIG>`
+   - If script exits with code != 0: return **1** with message "Cluster not reachable with provided kubeconfig"
+
+4. Get ArgoCD endpoint:
    ```
-     oc --kubeconfig <KUBECONFIG> get route openshift-gitops-server -n openshift-gitops -o jsonpath='{.spec.host}'
+   oc --kubeconfig <KUBECONFIG> get route openshift-gitops-server -n openshift-gitops -o jsonpath='{.spec.host}'
    ```
 
+5. Return **0**. Environment is configured.
