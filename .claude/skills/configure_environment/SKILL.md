@@ -1,7 +1,7 @@
 ---
 name: configure_environment
 description: Configure environment for ZTP operations by setting up KUBECONFIG and hub selection
-allowed-tools: Bash(.claude/skills/configure_environment/scripts/check_cluster_kubeconfig.sh:*), Bash( oc --kubeconfig:** get route:*)
+allowed-tools: Bash(.claude/skills/configure_environment/scripts/check_cluster_kubeconfig.sh:*), Bash( oc --kubeconfig:** get route:*), Bash(argocd:*)
 model: haiku
 ---
 
@@ -37,5 +37,6 @@ If argument is missing or uses `~`, return **1** with usage instructions.
    ```
    oc --kubeconfig <KUBECONFIG> get route openshift-gitops-server -n openshift-gitops -o jsonpath='{.spec.host}'
    ```
+5. Check ArgoCD login status. If not logged in, use `argocd login --sso --insecure` to authenticate.
 
 5. Return **0**. Environment is configured.
