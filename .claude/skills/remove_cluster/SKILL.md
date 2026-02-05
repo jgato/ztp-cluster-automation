@@ -34,16 +34,16 @@ After any skill/sub-command/sub-agent completes, I must immediately check my tod
 6. Use the skill `sync_argocd` to sync the "clusters" application in the proper hub. Pass the arguments: 1st one the hub endpoint, 2nd
    one the ArgoCD application that is called "clusters" by default.
 
-7. Monitor cluster removal status by using the `visualize_cluster_status` skill.
-   **CRITICAL: You MUST use ONLY the visualize-cluster-status skill to check status. DO NOT use direct oc commands.NEVER try to investigate what could be happening. NEVER do extra task if there are errors during the removal process**
-   ### Monitoring Process:
-   - Check every **5 minutes**:
-     1. Show cluster status
-     2. Wait for the skill to complete and return its result
-     3. **IMMEDIATELY output the skill's complete result to the user** - this is your ONLY response for this check
-     4. After displaying the output, check if the ClusterInstance CR still exists
-        - If it shows "NOT DEPLOYED": the removal is complete, proceed to step 8
-        - If it still exists: wait 5 minutes and repeat
-   - If the removal is taking too long, don't make any special extra checks. Just show the status and wait.
+7. Monitor cluster removal status using `visualize_cluster_status` skill.
+   
+   **CRITICAL: Use ONLY visualize_cluster_status skill. NO direct oc commands. NO extra investigation.**
+   
+   Loop until removal complete:
+   a. Call `visualize_cluster_status` skill for the cluster
+   b. Output the skill's complete result to the user
+   c. Check if ClusterInstance shows "NOT DEPLOYED"
+      - If "NOT DEPLOYED": removal complete, proceed to step 8
+      - If still exists: run `sleep 300` (5 minutes, foreground, NOT background) then repeat from (a)
+   d. Never analyze, debug or do whatever other extra action. Just wait.
 
 8. Exit command.
