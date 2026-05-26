@@ -1,47 +1,56 @@
 ---
 name: remove_cluster
 description: Complete GitOps workflow to remove a ZTP cluster
+allowed-tools: Bash(git:*), Bash(sleep:*), Skill(sync_argocd), Skill(visualize_cluster_status), Read, Edit
 ---
 
-# Remove ZTP cluster by name
+# Remove ZTP Cluster
 
-The name of the cluster is provided by $ARGUMENTS. Only one cluster can be removed per request.
-Show a summary of the cluster to be removed.
+Remove a single ZTP cluster via GitOps. Cluster name from $ARGUMENTS.
 
-## THIS IS A PARENT WORKFLOW
+## PARENT WORKFLOW - Execute ALL steps 1-6
 
-**You MUST execute ALL steps 1-8. Do NOT stop when a skill/sub-command/sub-agent completes.**
-
-After any skill/sub-command/sub-agent completes, I must immediately check my todo list:
-  - Mark the current todo as completed
-  - Mark the next todo as in_progress
-  - Immediately execute the next step
+After each step completes, mark current todo completed, mark next in_progress, and immediately proceed. Do NOT stop when a child skill returns.
 
 ## Steps
 
-1. Check the provided name exists in the `kustomization.yaml` in the section resources.
+### 1. Validate kustomization entry
 
-2. Check this entry is not already commented. If it is commented, notify the user about it and do nothing and exit.
+Check the `kustomization.yaml` for the cluster entry:
+- If the entry **does not exist** at all: notify the user and EXIT
+- If the entry **is already commented**: notify the user it is already removed and EXIT
+- If the entry **exists and is active** (uncommented): continue to step 2
 
-3. Comment the entry for the cluster. Pretty printout changes.
+### 2. Comment the cluster entry
 
-4. Use git to create a new commit with a message "removing cluster " and the cluster name that has been removed.
+Comment out the cluster entry in `kustomization.yaml` by adding `# ` prefix.
 
-5. Do a git push over origin and main branch.
+Show the change made (before/after).
 
-6. Use the skill `sync_argocd` to sync the "clusters" application in the proper hub. Pass the arguments: 1st one the hub endpoint, 2nd
-   one the ArgoCD application that is called "clusters" by default.
+### 3. Git commit and push
 
-7. Monitor cluster removal status using `visualize_cluster_status` skill.
-   
-   **CRITICAL: Use ONLY visualize_cluster_status skill. NO direct oc commands. NO extra investigation.**
-   
-   Loop until removal complete:
-   a. Call `visualize_cluster_status` skill for the cluster
-   b. Output the skill's complete result to the user
-   c. Check if ClusterInstance shows "NOT DEPLOYED"
-      - If "NOT DEPLOYED": removal complete, proceed to step 8
-      - If still exists: run `sleep 300` (5 minutes, foreground, NOT background) then repeat from (a)
-   d. Never analyze, debug or do whatever other extra action. Just wait.
+Commit kustomization.yaml with message `"removing cluster <cluster-name>"` and push to origin main.
 
-8. Exit command.
+### 4. Sync ArgoCD with prune
+
+Invoke `/sync_argocd` with arguments: hub endpoint, `"clusters"` as application name, and `prune` flag.
+
+When the sync skill completes, immediately continue to step 5.
+
+### 5. Monitor removal
+
+**CRITICAL: Use ONLY `/visualize_cluster_status` skill. NO direct oc commands. NO extra investigation. NO debugging.**
+
+**Maximum wait: 1 hour (60 minutes)**
+
+Check every 5 minutes (`sleep 300`):
+1. Invoke `/visualize_cluster_status` for the cluster
+2. Display the complete result verbatim (don't summarize)
+3. If ClusterInstance shows "NOT DEPLOYED": proceed to step 6
+4. Otherwise: sleep 300 and repeat
+
+On 1-hour timeout: show final status, notify user, and EXIT.
+
+### 6. Report removal complete
+
+Notify the user the cluster has been successfully removed.
