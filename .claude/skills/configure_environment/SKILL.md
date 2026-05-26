@@ -1,8 +1,6 @@
 ---
 name: configure_environment
 description: Configure environment for ZTP operations by setting up KUBECONFIG and hub selection
-allowed-tools: Bash(.claude/skills/configure_environment/scripts/check_cluster_kubeconfig.sh:*), Bash( oc --kubeconfig:** get route:*), Bash(argocd:*)
-model: haiku
 ---
 
 # Configure environment for ZTP

@@ -1,71 +1,90 @@
 ---
 name: deploy_cluster
 description: Complete GitOps workflow to deploy a ZTP cluster
-allowed-tools: Bash(git:*), Bash(oc --kubeconfig get secret:*), Bash(.claude/skills/deploy_cluster/scripts/prepare_ztp_cluster_pre_reqs.sh:*), Skill(sync_argocd),Read, Edit
-model: sonnet
+allowed-tools: Bash(.claude/skills/deploy_cluster/scripts/*:*), Bash(git:*), Bash(sleep:*), Skill(sync_argocd), Skill(visualize_cluster_status)
 ---
 
-# Deploy ZTP cluster by name
+# Deploy ZTP Cluster
 
-The name of the cluster is provided by $ARGUMENTS. Only one cluster can be deployed per request.
-Show a summary of the cluster to be deployed.
+Deploy a single ZTP cluster via GitOps. Cluster name from $ARGUMENTS.
 
-## THIS IS A PARENT WORKFLOW
+## PARENT WORKFLOW - Execute ALL steps 1-7
 
-**You MUST execute ALL steps 1-11. Do NOT stop when a skill/sub-command/sub-agent completes.**
-
-After any skill/sub-command/sub-agent completes, I must immediately check my todo list:
-  - Mark the current todo as completed
-  - Mark the next todo as in_progress
-  - Immediately execute the next step
+After each step completes, mark current todo completed, mark next in_progress, and immediately proceed. Do NOT stop when a child skill returns.
 
 ## Steps
 
-1. In the `kustomization.yaml`, check if this entry is already there and not commented. If so, notify the user and finish this workflow.
+### 1. Pre-validate
 
-2. Check the cluster manifest exists and contains a ClusterInstance Kind.
+```bash
+.claude/skills/deploy_cluster/scripts/pre-validate.sh <cluster-name> <kubeconfig-path>
+```
 
-3. Gather secret information to inject for the cluster creation:
-   - Check the Namespace with the clustername exists. If not, create it.
-   - Invoke script `.claude/skills/deploy_cluster/scripts/prepare_ztp_cluster_pre_reqs.sh <clustername> <kubeconfig>`.
-   - Verify two secrets exist in the cluster namespace:
-      - `assisted-deployment-pull-secret`
-      - `<clustername>-bmc-secret`
+| Exit code | Meaning | Action |
+|-----------|---------|--------|
+| 0 | Preconditions met | Continue to step 2 |
+| 3 | Already active in kustomization.yaml | Notify user and EXIT |
+| 2, 4, 5 | Missing kustomization/manifests | Report error and EXIT |
 
-4. Add/uncomment the cluster entry in kustomization.yaml. Pretty printout changes.
+Parse output: `ENTRY_STATUS` tells whether step 3 should `add` or `uncomment`.
 
-5. Git commit with message "adding cluster <clustername>".
+### 2. Prepare secrets
 
-6. Git push to origin main.
+```bash
+.claude/skills/deploy_cluster/scripts/prepare_ztp_cluster_pre_reqs.sh <cluster-name> <kubeconfig-path>
+```
 
-7. Use the skill `/sync_argocd` to sync argocd application. Use the params: hub endpoint and "clusters" as application name. When finishes continue to next step.
+The script handles credentials automatically:
+- If backed-up secrets exist from a previous redeploy (`.temp/redeploy-<cluster-name>/`), it restores them (`SECRETS_SOURCE=backup`)
+- Otherwise, it opens a zenity dialog for BMC credentials (`SECRETS_SOURCE=new`)
 
-8. Monitor installation using `visualize-cluster-status` skill until ManagedCluster is available and joined.
+| Exit code | Meaning | Action |
+|-----------|---------|--------|
+| 0 | Secrets ready | Continue to step 3 |
+| 2 | auth.json not found | Report error and EXIT |
+| 3-5 | Secret creation/verification failed | Report error and EXIT |
 
-   **CRITICAL: Use ONLY the visualize-cluster-status subagent. DO NOT use direct oc commands.NEVER try to investigate what could be happening. NEVER do extra task if there are errors during the installation process**
+### 3. Update kustomization.yaml
 
-   **Maximum wait: 3 hours (180 minutes)**
+Based on `ENTRY_STATUS` from step 1:
+- If `commented`: uncomment the cluster entry in kustomization.yaml
+- If `missing`: add `  - <cluster-name>/` to the resources section
 
-   Adaptive check intervals based on elapsed time from ClusterInstance creation:
-   - **0-20 min**: Check every 5 minutes
-   - **20-50 min**: Check every 15 minutes
-   - **50+ min**: Check every 5 minutes
+Show the change made (before/after).
 
-   At each check:
-   - Invoke skill for cluster status
-   - Output the skill's complete result directly (don't summarize)
-   - Check if ManagedCluster shows Available=True and Joined=True
-   - If yes: proceed to step 9
-   - If no: wait and repeat
+### 4. Git commit and push
 
-   On 3-hour timeout:
-   - Show final status, notify user of timeout
-   - Skip steps 9-10, invoke `/redeploy_cluster` and exit
+Commit kustomization.yaml with message `"adding cluster <cluster-name>"` and push to origin main.
 
-9. Extract kubeadmin password from secret `<clustername>-admin-password` in cluster namespace.
-   Save to `.temp/deploy-cluster-<clustername>/kubeadmin-password`. Display password and file location.
+### 5. Sync ArgoCD
 
-10. Extract kubeconfig from secret `<clustername>-admin-kubeconfig` in cluster namespace.
-    Save to `.temp/deploy-cluster-/kubeconfig`. Confirm file location.
+Invoke `/sync_argocd` with arguments: hub endpoint, `"clusters"` as application name.
 
-11. Report deployment complete.
+When the sync skill completes, immediately continue to step 6.
+
+### 6. Monitor installation
+
+**CRITICAL: Use ONLY `/visualize_cluster_status` skill. NO direct oc commands. NO extra investigation.**
+
+**Maximum wait: 3 hours (180 minutes)**
+
+Adaptive check intervals based on elapsed time:
+- **0-20 min**: check every 5 minutes (`sleep 300`)
+- **20-50 min**: check every 15 minutes (`sleep 900`)
+- **50+ min**: check every 5 minutes (`sleep 300`)
+
+At each check:
+1. Invoke `/visualize_cluster_status` for the cluster
+2. Display the complete result verbatim (don't summarize)
+3. If ManagedCluster shows Available=True AND Joined=True: proceed to step 7
+4. Otherwise: sleep the appropriate interval and repeat
+
+On 3-hour timeout: show final status, notify user, and EXIT.
+
+### 7. Extract credentials and report
+
+```bash
+.claude/skills/deploy_cluster/scripts/extract-credentials.sh <cluster-name> <kubeconfig-path>
+```
+
+Display the kubeadmin password and file locations from output. Report deployment complete.

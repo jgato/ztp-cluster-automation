@@ -1,117 +1,161 @@
-# ClusterInstances dir/repository
-
+# ZTP Cluster Automation
 
 ## Project Overview
 
-This directory contains a set of different ClusterInstance CRs to manage your infrastructure.
-These CRs are part of an Openshift/Kubernetes API that you learn more [here](https://docs.redhat.com/en/documentation/red_hat_advanced_cluster_management_for_kubernetes/2.14/html/multicluster_engine_operator_with_red_hat_advanced_cluster_management/siteconfig-intro). The API is proveded by the RHACM Siteconfig Operator.
+This repository manages OpenShift cluster infrastructure via GitOps using ClusterInstance CRs from the [RHACM Siteconfig Operator](https://docs.redhat.com/en/documentation/red_hat_advanced_cluster_management_for_kubernetes/2.14/html/multicluster_engine_operator_with_red_hat_advanced_cluster_management/siteconfig-intro). A `kustomization.yaml` drives OpenShift GitOps (ArgoCD) to reconcile cluster state. Adding or removing entries in `kustomization.yaml` triggers cluster lifecycle operations.
 
-There is a `kustomization.yaml` that is used by Openshift GitOps operator (that is basically ArgoCD), to do
-the different GitOps tasks. Adding/removing entries to the `kustomization.yaml` to manage your existing
-infrastructure with the GitOps way.
+## Conventions
 
-## ArgoCD interaction
+### OpenShift commands
 
-The ArgoCD endpoint is automatically configured by the `configure_environment` skill, which extracts it from the `openshift-gitops-server` Route in the `openshift-gitops` namespace.
+All `oc` commands MUST use `--kubeconfig` as the FIRST parameter after `oc`.
 
-All ArgoCD commands should use `--insecure` and `--grpc-web` parameters.
+- **Correct:** `oc --kubeconfig <path> get pods -n namespace`
+- **Wrong:** `oc get --kubeconfig <path> pods`
+- **Wrong:** `oc get pods --kubeconfig <path>`
 
-## Openshift interaction
+The kubeconfig path comes from the environment variable or the context set by `configure_environment`.
 
-**CRITICAL:** All `oc` commands MUST use the `--kubeconfig` parameter as the FIRST parameter immediately after `oc`.
+### ArgoCD commands
 
-The value for the param is coming from the kubeconfig path from an env variable or from the context.
+All ArgoCD commands use `--insecure` and `--grpc-web`. The endpoint is auto-configured by the `configure_environment` skill from the `openshift-gitops-server` Route.
 
-**Correct format:** `oc --kubeconfig <path> <VERB> <arguments>`
-**Example:** `oc --kubeconfig /path/to/kubeconfig get pods -n namespace`
+### Script execution
 
-## Claude commands and scripts
+- Use relative paths from project root: `.claude/skills/deploy_cluster/scripts/script.sh`
+- Never `cd` to the script directory
+- Never export KUBECONFIG before calling a script (pass it as a parameter)
+- Never prefix script calls with environment variables
 
-The `.claude/commands/` directory contains custom commands and scripts to automate ZTP cluster management tasks. These commands are integrated with Claude Code to streamline GitOps operations.
+### Cluster operations
 
-### Available commands
+- One cluster per request. Never process multiple clusters in a single skill invocation.
+- Each cluster has its own namespace matching the cluster name.
+- Cluster manifests are YAML files in the project root (e.g., `sno1.yaml`) containing `kind: ClusterInstance`.
+- GitOps pattern: modify `kustomization.yaml` -> commit -> push -> sync ArgoCD -> monitor
 
-#### configure_environment
-Configures the environment for ZTP operations by validating KUBECONFIG and extracting the ArgoCD endpoint from the cluster.
-- **Arguments:** KUBECONFIG path (required, absolute path, no `~`)
-- **Location:** `.claude/skills/configure_environment/`
+### Temporal directories and files
 
-#### sync_argocd
-Synchronizes an ArgoCD application on a hub instance using SSO authentication.
-- **Arguments:** ArgoCD endpoint, application name, optional prune flag
-- **Location:** `.claude/skills/sync_argocd/`
+All temporary data goes under `.temp/` in the project root (git-ignored, never committed).
 
-#### deploy_cluster
-Complete GitOps workflow to deploy a ZTP cluster. Prepares cluster, updates kustomization.yaml, commits, pushes, and syncs ArgoCD.
-- **Arguments:** Single cluster name (one cluster per request)
-- **Location:** `.claude/skills/deploy_cluster/`
+**Naming pattern:** `.temp/<skill-name>-<cluster-name>/`
 
-#### remove_cluster
-Complete GitOps workflow to remove a ZTP cluster. Comments out entry in kustomization.yaml, commits, pushes, and syncs with prune.
-- **Arguments:** Single cluster name (one cluster per request)
-- **Location:** `.claude/skills/remove_cluster/`
+| Directory | Purpose |
+|-----------|---------|
+| `.temp/deploy-cluster-<name>/` | Deployed cluster credentials (kubeadmin password, kubeconfig) |
+| `.temp/redeploy-<name>/` | Backed-up secrets during redeploy |
+| `.temp/visualize-cluster-status-<name>/` | Status data collection (transient) |
+| `.temp/telco-hub-rds-status-<name>/` | Hub status data (transient) |
 
-#### redeploy_cluster
-Complete workflow to redeploy a ZTP cluster. Removes cluster, waits for cleanup, restores secrets, and redeploys.
-- **Arguments:** Single cluster name (one cluster per request)
-- **Location:** `.claude/skills/redeploy_cluster/`
+- Scripts create their dirs via `mkdir -p`
+- Transient data is cleaned up via `trap "rm -rf $TMPDIR" EXIT`
+- Persistent data (credentials, backups) is NOT auto-cleaned
 
-#### visualize_cluster_status
-This skill is key and it's always used to show the current status of any cluster, in any moment, or during installation,
-or removal, etc.
-Displays comprehensive status of ZTP/RHACM clusters including ClusterInstance, installation progress, agents, and related resources.
-- **Type:** Specialized read-only skill with restricted permissions
-- **Triggers:** "show cluster status", "check cluster", "monitor cluster", "cluster installation progress"
-- **Scripts:** Uses `get-cluster-status.sh` for one-time checks or `monitor-cluster.sh` for continuous monitoring
-- **Location:** `.claude/skills/visualize_cluster_status/`
+## Skills
 
-#### telco_hub_rds_status
-This skill displays comprehensive status of Telco Hub RDS clusters configured via GitOps.
-Shows operator versions and CR statuses with parallel data collection for maximum performance.
-- **Type:** Specialized read-only skill with restricted permissions
-- **Triggers:** "show hub status", "check hub", "telco hub status", "hub rds status"
-- **Scripts:** Uses `get-operator-versions.sh` and `get-cr-statuses.sh` in parallel
-- **Location:** `.claude/skills/telco_hub_rds_status/`
+All skills are in `.claude/skills/<skill-name>/SKILL.md`. Scripts are in `.claude/skills/<skill-name>/scripts/`.
 
-### Helper Scripts
+### configure_environment
 
-#### prepare_ztp_cluster_pre_reqs.sh
-Creates required Kubernetes secrets for ZTP cluster deployment (pull-secret and BMC credentials).
-- **Location:** `.claude/skills/deploy_cluster/scripts/prepare_ztp_cluster_pre_reqs.sh`
-- **Usage:** `./prepare_ztp_cluster_pre_reqs.sh <NAMESPACE> <KUBECONFIG>`
+Sets up the environment for all ZTP operations. Must be run first in any session.
 
-#### check_cluster_kubeconfig.sh
-Verifies OpenShift connectivity using provided kubeconfig.
-- **Location:** `.claude/skills/configure_environment/scripts/check_cluster_kubeconfig.sh`
-- **Usage:** `./check_cluster_kubeconfig.sh <kubeconfig-path>`
-- **Exit codes:** 0 (cluster reachable), 1 (cluster not reachable)
+- **Args:** `<kubeconfig-path>` (absolute path, no `~`)
+- **What it does:** Validates kubeconfig, checks cluster connectivity, extracts ArgoCD endpoint from the `openshift-gitops-server` Route, and authenticates ArgoCD via SSO.
+- **Return codes:** 0 (success), 1 (error)
 
-#### Visualize Cluster Status Scripts
-Located in `.claude/skills/visualize_cluster_status/scripts/`:
-- **get-cluster-status.sh** - One-time status check with parallel data gathering
-- **monitor-cluster.sh** - Continuous monitoring for installation progress
-- **collect-resource-data.sh** - Low-level data collection utility
+### deploy_cluster
 
-#### Telco Hub RDS Status Scripts
-Located in `.claude/skills/telco_hub_rds_status/scripts/`:
-- **get-operator-versions.sh** - Collects operator versions in parallel for Telco Hub RDS (ACM, TALM, GitOps)
-- **get-cr-statuses.sh** - Collects CR statuses in parallel (MultiClusterHub, MultiClusterEngine, MultiClusterObservability, AgentServiceConfig)
+Complete GitOps workflow to deploy a ZTP cluster. Parent workflow with 7 steps.
 
+- **Args:** `<cluster-name>` (single cluster only)
+- **What it does:** Pre-validates manifests and kustomization state, creates namespace and secrets (from backup or fresh via zenity), updates kustomization.yaml, commits and pushes, syncs ArgoCD, monitors installation up to 3 hours, and extracts cluster credentials on success.
+- **Scripts:** `pre-validate.sh`, `prepare_ztp_cluster_pre_reqs.sh`, `extract-credentials.sh`
+- **Calls:** `sync_argocd`, `visualize_cluster_status`
 
-### Usage Notes
-- **CRITICAL: All cluster operations accept ONLY ONE cluster per request. Never attempt to process multiple clusters in a single command invocation.**
-- Some rules before executing an script:
-  - When executing any script never use `cd` command to move to the directory of the script. Execute including the path.
-  - Always call the script with a realtive path to the project. 
-    - CORRECT: `.claude/skills/visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name> <kubeconfig>`
-    - NOT CORRECT: `./.claude/skills/visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name> <kubeconfig>`
-    - NOT CORRECT: `/home/user/project/.claude/skills/visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name>`
-  - Never export the KUBECONFIG before calling the script. The KUBECONFIG is passed as the second param.
-  - When executing script never call with env variables as prefix
-- **CRITICAL: All `oc` commands MUST have `--kubeconfig <path>` as the FIRST parameter immediately after `oc`**
-  - The configured KUBECONFIG exists in the context or as an env variable
-  - **Correct format:** `oc --kubeconfig <path> <VERB> <arguments>`
-  - **NEVER use:** `oc get --kubeconfig <path>` or `oc <VERB> --kubeconfig <path>`
-- GitOps operations follow the pattern: modify kustomization.yaml → commit → push → sync ArgoCD app
-- Cluster operations are namespace-scoped (one namespace per cluster)
+### remove_cluster
 
+Complete GitOps workflow to remove a ZTP cluster. Parent workflow with 8 steps.
+
+- **Args:** `<cluster-name>` (single cluster only)
+- **What it does:** Verifies cluster exists in kustomization.yaml and is not already commented, comments the entry, commits and pushes, syncs ArgoCD with prune, monitors removal until ClusterInstance shows "NOT DEPLOYED" (5-minute check intervals).
+- **Calls:** `sync_argocd`, `visualize_cluster_status`
+
+### redeploy_cluster
+
+Complete workflow to remove and redeploy a cluster while preserving secrets. Parent workflow with 7 steps.
+
+- **Args:** `<cluster-name>` (single cluster only)
+- **What it does:** Backs up `assisted-deployment-pull-secret` and `<cluster>-bmc-secret` to `.temp/redeploy-<name>/`, invokes `remove_cluster`, waits for removal, recreates namespace and restores secrets if needed, then invokes `deploy_cluster`.
+- **Calls:** `remove_cluster`, `deploy_cluster`
+
+### sync_argocd
+
+Synchronizes an ArgoCD application. Simple child skill.
+
+- **Args:** `<endpoint> <app-name> [prune]`
+- **Model:** haiku (cost-optimized)
+- **What it does:** Refreshes and syncs the named ArgoCD application. If prune flag is set, syncs with `--prune` and waits up to 5 minutes for completion.
+
+### visualize_cluster_status
+
+Displays comprehensive status of a ZTP cluster. Read-only child skill.
+
+- **Args:** `<cluster-name>`
+- **Model:** haiku (cost-optimized)
+- **What it does:** Runs `get-cluster-status.sh` for parallel data collection of ClusterInstance, BareMetalHost, InfraEnv, AgentClusterInstall, Agents, and ManagedCluster. Formats output as ANSI-colored ASCII tables with status icons.
+- **Scripts:** `get-cluster-status.sh`, `collect-resource-data.sh`, `monitor-cluster.sh`
+
+### telco_hub_rds_status
+
+Displays status of Telco Hub RDS operators and CRs. Read-only skill.
+
+- **Args:** none
+- **What it does:** Verifies hub cluster context and ArgoCD `hub-config` app sync status. Collects operator versions (ACM, TALM, GitOps) and CR statuses (MultiClusterHub, MultiClusterEngine, MultiClusterObservability, AgentServiceConfig) in parallel. Formats as ASCII tables.
+- **Scripts:** `get-operator-versions.sh`, `get-cr-statuses.sh`
+
+## Workflows
+
+### Deploy a new cluster
+
+```
+User: configure_environment /path/to/kubeconfig
+User: deploy_cluster sno1
+```
+
+Flow: `configure_environment` -> `deploy_cluster` -> `pre-validate.sh` -> `prepare_ztp_cluster_pre_reqs.sh` -> edit kustomization.yaml -> git commit/push -> `sync_argocd` -> monitor via `visualize_cluster_status` (up to 3h) -> `extract-credentials.sh`
+
+### Remove a cluster
+
+```
+User: configure_environment /path/to/kubeconfig
+User: remove_cluster sno1
+```
+
+Flow: `configure_environment` -> `remove_cluster` -> comment kustomization.yaml -> git commit/push -> `sync_argocd` (with prune) -> monitor via `visualize_cluster_status` until NOT DEPLOYED
+
+### Redeploy a cluster
+
+```
+User: configure_environment /path/to/kubeconfig
+User: redeploy_cluster sno1
+```
+
+Flow: `configure_environment` -> `redeploy_cluster` -> backup secrets -> `remove_cluster` (full removal flow) -> restore namespace + secrets -> `deploy_cluster` (full deploy flow)
+
+The redeploy workflow preserves BMC and pull-secret credentials so the user does not need to re-enter them. The `deploy_cluster` script detects backed-up secrets in `.temp/redeploy-<name>/` and restores them automatically instead of opening the zenity dialog.
+
+### Check cluster status
+
+```
+User: show me the status of sno1
+```
+
+Triggers `visualize_cluster_status` which runs parallel data collection and displays a formatted status report.
+
+### Check hub status
+
+```
+User: show hub status
+```
+
+Triggers `telco_hub_rds_status` which collects operator versions and CR statuses in parallel and displays formatted tables.

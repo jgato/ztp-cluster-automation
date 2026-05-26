@@ -1,8 +1,6 @@
 ---
 name: remove_cluster
 description: Complete GitOps workflow to remove a ZTP cluster
-allowed-tools: Bash(git:*), Read, Edit, Skill(sync_argocd), Skill(visualize_cluster_status)
-model: sonnet
 ---
 
 # Remove ZTP cluster by name
