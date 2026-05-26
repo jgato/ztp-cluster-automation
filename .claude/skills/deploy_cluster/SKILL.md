@@ -35,8 +35,8 @@ Parse output: `ENTRY_STATUS` tells whether step 3 should `add` or `uncomment`.
 ```
 
 The script handles credentials automatically:
-- If backed-up secrets exist from a previous redeploy (`.temp/redeploy-<cluster-name>/`), it restores them (`SECRETS_SOURCE=backup`)
-- Otherwise, it opens a zenity dialog for BMC credentials (`SECRETS_SOURCE=new`)
+- If both secrets already exist in the cluster (e.g. restored by a redeploy), it skips creation (`SECRETS_SOURCE=existing`)
+- Otherwise, it creates the pull secret from `~/.config/containers/auth.json` and opens a zenity dialog for BMC credentials (`SECRETS_SOURCE=new`)
 
 | Exit code | Meaning | Action |
 |-----------|---------|--------|

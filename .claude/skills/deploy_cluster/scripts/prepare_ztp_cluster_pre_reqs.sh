@@ -13,8 +13,6 @@ fi
 CLUSTERNS="$1"
 KUBECONFIG_PATH="$2"
 
-PROJECT_ROOT="$(pwd)"
-BACKUP_DIR="$PROJECT_ROOT/.temp/redeploy-$CLUSTERNS"
 OC_CMD="oc --kubeconfig $KUBECONFIG_PATH"
 
 # Create namespace if it does not exist
@@ -24,24 +22,11 @@ if ! $OC_CMD get namespace "$CLUSTERNS" &>/dev/null; then
     NAMESPACE_CREATED="true"
 fi
 
-# Check for backed-up secrets from a previous redeploy
-if [ -d "$BACKUP_DIR" ] && \
-   [ -f "$BACKUP_DIR/assisted-deployment-pull-secret.yaml" ] && \
-   [ -f "$BACKUP_DIR/${CLUSTERNS}-bmc-secret.yaml" ]; then
+# Check if secrets already exist in the cluster (e.g. restored by redeploy)
+if $OC_CMD get secret assisted-deployment-pull-secret -n "$CLUSTERNS" &>/dev/null && \
+   $OC_CMD get secret "${CLUSTERNS}-bmc-secret" -n "$CLUSTERNS" &>/dev/null; then
 
-    echo "Found backed-up secrets in $BACKUP_DIR, restoring..." >&2
-
-    $OC_CMD apply -f "$BACKUP_DIR/assisted-deployment-pull-secret.yaml" || {
-        echo "Error: Failed to restore pull secret from backup" >&2
-        exit 3
-    }
-
-    $OC_CMD apply -f "$BACKUP_DIR/${CLUSTERNS}-bmc-secret.yaml" || {
-        echo "Error: Failed to restore BMC secret from backup" >&2
-        exit 4
-    }
-
-    SECRETS_SOURCE="backup"
+    SECRETS_SOURCE="existing"
 else
     # Create fresh secrets
 

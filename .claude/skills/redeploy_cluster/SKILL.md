@@ -1,49 +1,71 @@
 ---
 name: redeploy_cluster
 description: Complete workflow to redeploy a ZTP cluster with secret preservation
+allowed-tools: Bash(mkdir:*), Bash(oc --kubeconfig *), Bash(sleep:*), Skill(remove_cluster), Skill(deploy_cluster)
 ---
 
-# Redeploy ZTP cluster by name
+# Redeploy ZTP Cluster
 
-The skill takes only one $ARGUMENT with a cluster name. If more than one
-ARGUMENT is provided, exit and explain the skill only allows one cluster redeployment.
-But you can call the skill several times with different clusters.
+Remove and redeploy a single ZTP cluster while preserving secrets. Cluster name from $ARGUMENTS.
 
-Consider the environment is correctly configured about KUBECONFIG and hub selection. So, do not make
-any check on KUBECONFIG variable, neither clusters connectivity.
+## PARENT WORKFLOW - Execute ALL steps 1-7
 
-## THIS IS A PARENT WORKFLOW
-
-**You MUST execute ALL steps 0-7. Do NOT stop when a skill/sub-command/sub-agent completes.**
-
-After any skill completes, I must immediately check my todo list:
-  - Mark the current todo as completed
-  - Mark the next todo as in_progress
-  - Immediately execute the next step
+After each step completes, mark current todo completed, mark next in_progress, and immediately proceed. Do NOT stop when a child skill returns.
 
 ## Steps
 
-0. Make a temporal directory called ".temp/redeploy-<clustername>/"
+### 1. Backup secrets
 
-1. Then:
-    * Make a copy of the secret 'assisted-deployment-pull-secret'
-    * Make a copy of the secret 'clustername-bmc-secret'
-    * Secrets exist in the namespace with the name of the cluster.
-    * Store the secrets in the temporal directory.
+Create directory `.temp/redeploy-<cluster-name>/` and save both secrets from the cluster namespace:
 
-2. Invoke /remove_cluster with the cluster name
+```bash
+mkdir -p .temp/redeploy-<cluster-name>
+oc --kubeconfig <path> get secret assisted-deployment-pull-secret -n <cluster-name> -o yaml > .temp/redeploy-<cluster-name>/assisted-deployment-pull-secret.yaml
+oc --kubeconfig <path> get secret <cluster-name>-bmc-secret -n <cluster-name> -o yaml > .temp/redeploy-<cluster-name>/<cluster-name>-bmc-secret.yaml
+```
 
-3. The /remove_cluster skill will handle the entire removal process including monitoring until complete.
-   When the /remove_cluster skill exits/completes successfully, the cluster has been removed.
-   If /remove_cluster exits with an error, abort the redeploy and report the error.
+If either secret does not exist, report the error and EXIT.
 
-4. After /remove_cluster completes successfully, check if the Namespace of the cluster was removed. If yes, create it again and restore the copy of the secrets from step 0.
+### 2. Remove cluster
 
-5. Invoke /deploy_cluster with the cluster name
+Invoke `/remove_cluster` with the cluster name.
 
-6. The /deploy_cluster skill will handle the entire deployment process including monitoring until complete.
-   When the /deploy_cluster skill exits/completes successfully, the cluster has been deployed.
-   **IMPORTANT: Do NOT exit the redeploy skill. Immediately continue to step 7.**
-   If /deploy_cluster exits with an error, abort the redeploy and report the error.
+When the remove skill completes, immediately continue to step 3. If it exits with an error, report and EXIT.
 
-7. Report successful redeployment completion to the user and exit the redeploy skill.
+### 3. Monitor removal
+
+**CRITICAL: Use ONLY `/visualize_cluster_status` skill. NO direct oc commands. NO extra investigation.**
+
+Verify the cluster is fully removed before proceeding:
+1. Invoke `/visualize_cluster_status` for the cluster
+2. If ClusterInstance shows "NOT DEPLOYED": proceed to step 4
+3. Otherwise: `sleep 300` and repeat
+
+### 4. Ensure namespace exists
+
+After removal, the namespace may have been deleted. If namespace `<cluster-name>` does not exist, create it:
+
+```bash
+oc --kubeconfig <path> create namespace <cluster-name>
+```
+
+### 5. Restore secrets from backup
+
+Restore both secrets into the namespace from the backup files:
+
+```bash
+oc --kubeconfig <path> apply -f .temp/redeploy-<cluster-name>/assisted-deployment-pull-secret.yaml
+oc --kubeconfig <path> apply -f .temp/redeploy-<cluster-name>/<cluster-name>-bmc-secret.yaml
+```
+
+### 6. Deploy cluster
+
+Invoke `/deploy_cluster` with the cluster name.
+
+The secrets are already in place. The `deploy_cluster` prepare script will verify they exist and continue without asking for credentials.
+
+When the deploy skill completes successfully, immediately continue to step 7. If it exits with an error, report and EXIT.
+
+### 7. Report redeployment complete
+
+Notify the user the cluster has been successfully redeployed.
