@@ -2,7 +2,6 @@
 name: telco-hub-rds-status
 description: Display comprehensive status of Telco Hub RDS clusters including operator versions and CR statuses
 allowed-tools: Write(.temp/**), Bash(.claude/skills/telco_hub_rds_status/scripts/*:*)
-model: haiku
 ---
 
 # Telco Hub RDS Status Visualization Skill

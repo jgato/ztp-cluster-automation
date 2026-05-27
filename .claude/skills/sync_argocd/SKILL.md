@@ -2,7 +2,6 @@
 name: sync_argocd
 description: Synchronize an ArgoCD application on a hub instance using SSO authentication
 allowed-tools: Bash(argocd:*), Bash(sleep:*)
-model: haiku
 ---
 
 # Sync ArgoCD Application
