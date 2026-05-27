@@ -270,33 +270,16 @@
 <div class="slide">
   <h2>Background</h2>
   <div class="two-col">
-    <div>
-      <h3>Kubernetes &amp; OpenShift</h3>
-      <p>Kubernetes is the standard for container orchestration. OpenShift builds on it with enterprise features: integrated CI/CD, operator lifecycle management, and multi-cluster capabilities.</p>
-      <p style="margin-top:15px;">At the edge and in telco, clusters are deployed on <strong>bare-metal servers</strong> — no cloud provider, no VM layer. This means direct hardware management: BMC controllers, ISO booting, network bonding, and disk partitioning.</p>
-    </div>
-    <div>
-      <h3>GitOps Methodology</h3>
-      <p>GitOps uses Git as the single source of truth for declarative infrastructure. The desired state is described in YAML files stored in a Git repository.</p>
-      <p style="margin-top:15px;">A reconciliation engine (ArgoCD) continuously watches the repo and ensures the live cluster matches. Benefits:</p>
-      <ul style="margin-top:10px;">
-        <li>Auditable: every change is a commit</li>
-        <li>Reversible: git revert undoes changes</li>
-        <li>Reproducible: same repo = same state</li>
-        <li>Collaborative: PRs for infrastructure</li>
-      </ul>
-    </div>
-  </div>
-  <div style="margin-top: 30px;">
-    <div class="flow-diagram">
-      <div class="flow-box" style="border-color:#268bd2;">Desired State (Git)</div>
-      <span class="flow-arrow">&rarr;</span>
-      <div class="flow-box skill">ArgoCD watches &amp; syncs</div>
-      <span class="flow-arrow">&rarr;</span>
-      <div class="flow-box" style="border-color:#859900; color:#859900;">Live Cluster converges</div>
-      <span class="flow-arrow" style="color:#ccc;">&#x21BA;</span>
-      <div class="flow-box" style="border-color:#93a1a1; color:#93a1a1;">Drift detected? Auto-reconcile</div>
-    </div>
+        <div>
+          <h3>Kubernetes &amp; OpenShift</h3>
+          <p>Kubernetes is the standard for container orchestration. OpenShift builds on it with enterprise features: integrated CI/CD, operator lifecycle management, and multi-cluster capabilities.</p>
+          <p style="margin-top: 12px;">For this talk: <strong>OpenShift = Kubernetes + Enterprise Services</strong></p>
+        </div>
+        <div>
+          <h3>GitOps Methodology</h3>
+          <p>GitOps uses Git as the single source of truth for declarative infrastructure. The desired state is described in YAML files stored in a Git repository.</p>
+          <p style="margin-top: 12px;"><strong>Add a file</strong> that defines a cluster &rarr; installs the cluster.<br><strong>Remove the file</strong> &rarr; destroys the cluster.</p>
+        </div>
   </div>
 </div>
 
@@ -320,20 +303,7 @@
       <p>Git is the single source of truth. ArgoCD watches the repository and reconciles cluster state. Adding a line to <code>kustomization.yaml</code> deploys a cluster. Commenting it out removes it.</p>
     </div>
   </div>
-  <div style="margin-top: 35px;">
-    <h3>The Stack</h3>
-    <div class="flow-diagram" style="margin-top: 10px;">
-      <div class="flow-box" style="border-color:#268bd2;">ClusterInstance CR</div>
-      <span class="flow-arrow">+</span>
-      <div class="flow-box" style="border-color:#268bd2;">ArgoCD</div>
-      <span class="flow-arrow">+</span>
-      <div class="flow-box" style="border-color:#859900;">RHACM Siteconfig</div>
-      <span class="flow-arrow">+</span>
-      <div class="flow-box" style="border-color:#6c71c4;">Assisted Service</div>
-      <span class="flow-arrow">=</span>
-      <div class="flow-box" style="border-color:#b58900; color:#b58900;">Fully automated bare-metal provisioning</div>
-    </div>
-  </div>
+
 </div>
 
 <!-- Slide 3: The Problem -->
@@ -432,70 +402,57 @@
         <li>Siteconfig Operator creates BareMetalHost, InfraEnv, AgentClusterInstall</li>
       </ul>
     </div>
-    <div class="card">
-      <h3>Provisioning Flow</h3>
+   </div>
+</div>
+
+<!-- Slide 4: ClusterInstance CR -->
+<div class="slide">
+  <h2>One YAML Defines an Entire Cluster</h2>
+  <div class="two-col" style="gap: 40px;">
+    <div class="code-block" style="font-size: 0.85em; line-height: 1.5; margin: 0;">
+      <span style="color:#268bd2;">apiVersion:</span> siteconfig.open-cluster-management.io/v1alpha1<br>
+      <span style="color:#268bd2;">kind:</span> <span class="cmd">ClusterInstance</span><br>
+      <span style="color:#268bd2;">metadata:</span><br>
+      &nbsp;&nbsp;<span style="color:#268bd2;">name:</span> sno1<br>
+      &nbsp;&nbsp;<span style="color:#268bd2;">namespace:</span> sno1<br>
+      <span style="color:#268bd2;">spec:</span><br>
+      &nbsp;&nbsp;<span style="color:#268bd2;">baseDomain:</span> example.com<br>
+      &nbsp;&nbsp;<span style="color:#268bd2;">clusterNetwork:</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;- cidr: 10.128.0.0/14<br>
+      &nbsp;&nbsp;<span style="color:#268bd2;">nodes:</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;- <span style="color:#268bd2;">hostName:</span> sno1.example.com<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#268bd2;">bmcAddress:</span> redfish://192.168.1.10/...<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#268bd2;">bmcCredentialsName:</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: sno1-bmc-secret<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#268bd2;">bootMACAddress:</span> aa:bb:cc:dd:ee:ff<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#268bd2;">role:</span> master<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># ... network config, disk hints, etc.</span>
+    </div>
+    <div>
+      <h3>What This Defines</h3>
       <ul>
-        <li>Assisted Service generates discovery ISO</li>
-        <li>BMC boots host from ISO via Redfish/IPMI</li>
-        <li>Agent registers, validates, installs OpenShift</li>
-        <li>ManagedCluster joins hub when ready</li>
+        <li><strong>Identity:</strong> cluster name, domain, namespace</li>
+        <li><strong>Network:</strong> cluster CIDR, service network, DNS</li>
+        <li><strong>Hardware:</strong> BMC address for remote power control</li>
+        <li><strong>Credentials:</strong> reference to BMC secret</li>
+        <li><strong>Boot:</strong> MAC address, disk, NIC configuration</li>
       </ul>
+      <h3>From YAML to Running Cluster</h3>
+      <div class="flow-diagram" style="justify-content: flex-start; margin: 10px 0;">
+        <div class="flow-box" style="padding: 6px 12px;">Push YAML</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box" style="padding: 6px 12px;">ArgoCD syncs</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box" style="padding: 6px 12px;">Siteconfig expands</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box" style="padding: 6px 12px;">Host boots</div>
+      </div>
+      <p style="font-size: 1em; margin-top: 15px;">The real CR is ~150 lines. Siteconfig Operator expands it into BareMetalHost, InfraEnv, AgentClusterInstall, and more.</p>
     </div>
   </div>
 </div>
 
-<!-- Slide 4: The Solution -->
-<div class="slide">
-  <h2>The Solution</h2>
-  <p style="font-size:1.3em; margin-bottom: 30px;">An AI-powered automation layer that speaks natural language and executes deterministic workflows.</p>
-  <div class="flow-diagram">
-    <div class="flow-box">User</div>
-    <span class="flow-arrow">&rarr;</span>
-    <div class="flow-box skill">Claude Code Skills</div>
-    <span class="flow-arrow">&rarr;</span>
-    <div class="flow-box script">Bash Scripts</div>
-    <span class="flow-arrow">&rarr;</span>
-    <div class="flow-box">oc / argocd CLI</div>
-    <span class="flow-arrow">&rarr;</span>
-    <div class="flow-box">OpenShift + RHACM</div>
-  </div>
-  <div class="code-block" style="margin-top: 30px;">
-    <span class="prompt">User:</span> <span class="cmd">deploy_cluster</span> <span class="arg">sno1</span><br>
-    <br>
-    <span class="comment"># Claude Code executes 7 deterministic steps:</span><br>
-    <span class="comment"># pre-validate -> secrets -> kustomization -> git -> argocd -> monitor -> credentials</span><br>
-    <br>
-    <span class="output">Deployment complete. kubeadmin password saved to .temp/deploy-cluster-sno1/</span>
-  </div>
-</div>
-
-<!-- Slide 5: Claude Code Architecture -->
-<div class="slide">
-  <h2>Architecture</h2>
-  <div class="three-col">
-    <div class="card">
-      <span class="icon">&#x1F9E0;</span>
-      <h3>Claude Code Skills</h3>
-      <p>SKILL.md files define workflows as structured steps. Parent skills orchestrate child skills. The LLM handles adaptive decisions (monitoring loops), everything else is deterministic.</p>
-    </div>
-    <div class="card">
-      <span class="icon">&#x1F4DC;</span>
-      <h3>Bash Scripts</h3>
-      <p>Deterministic operations live in scripts with defined exit codes and key=value output. Pre-validation, secret management, credential extraction.</p>
-    </div>
-    <div class="card">
-      <span class="icon">&#x1F504;</span>
-      <h3>GitOps Loop</h3>
-      <p>Every change follows: modify kustomization.yaml &rarr; commit &rarr; push &rarr; sync ArgoCD &rarr; monitor. The cluster converges to desired state.</p>
-    </div>
-  </div>
-  <div style="margin-top: 30px;">
-    <h3>Design Principle: Deterministic Where Possible, Intelligent Where Needed</h3>
-    <p>Scripts handle mechanical operations (validation, secret creation, credential extraction). The LLM handles adaptive behavior (monitoring loops, user interaction, error reporting).</p>
-  </div>
-</div>
-
-<!-- Slide 6: Skills Overview -->
+<!-- Slide 5: Skills Overview -->
 <div class="slide">
   <h2>Skills</h2>
   <table>
@@ -542,6 +499,48 @@
   </table>
 </div>
 
+<!-- Slide 6: Deploy Cluster Example -->
+<div class="slide">
+  <h2>Deploy a Cluster with One Command</h2>
+  <div class="two-col" style="gap: 40px;">
+    <div class="code-block" style="font-size: 0.85em; line-height: 1.6; margin: 0;">
+      <span class="prompt">User:</span> <span class="cmd">/deploy_cluster</span> <span class="arg">sno1</span><br>
+      <br>
+      <span class="comment"># 1. Pre-validate manifest &amp; kustomization</span><br>
+      <span class="output">sno1.yaml found. Entry commented in kustomization.yaml</span><br>
+      <br>
+      <span class="comment"># 2. Create namespace + secrets</span><br>
+      <span class="output">Namespace sno1 created</span><br>
+      <span class="output">BMC and pull secrets configured</span><br>
+      <br>
+      <span class="comment"># 3-4. Update kustomization.yaml + git push</span><br>
+      <span class="output">[main abc1234] deploying cluster sno1</span><br>
+      <br>
+      <span class="comment"># 5. Sync ArgoCD application</span><br>
+      <span class="output">ArgoCD sync complete</span><br>
+      <br>
+      <span class="comment"># 6. Monitor installation (~45 min)</span><br>
+      <span class="output">&#x1F680; INSTALLING (35%) ... (65%) ... &#x2705; INSTALLED</span><br>
+      <br>
+      <span class="comment"># 7. Extract credentials</span><br>
+      <span class="output">kubeadmin password saved to .temp/deploy-cluster-sno1/</span>
+    </div>
+    <div>
+      <h3>7 Automated Steps</h3>
+      <ul>
+        <li><strong>pre-validate.sh</strong> &mdash; checks manifest &amp; kustomization state</li>
+        <li><strong>prepare_ztp.sh</strong> &mdash; namespace + secrets (or restore from backup)</li>
+        <li>Edit <strong>kustomization.yaml</strong> &mdash; uncomment cluster entry</li>
+        <li><strong>Git commit + push</strong></li>
+        <li><strong>/sync_argocd</strong> &mdash; sync the clusters application</li>
+        <li><strong>/visualize_cluster_status</strong> &mdash; monitor up to 3 hours</li>
+        <li><strong>extract-credentials.sh</strong> &mdash; kubeadmin + kubeconfig</li>
+      </ul>
+      <p style="font-size: 1.1em; margin-top: 20px;"><strong>One command. Seven steps. ~45 minutes</strong> from YAML to running cluster.</p>
+    </div>
+  </div>
+</div>
+
 <!-- Slide 7: Smart Monitoring -->
 <div class="slide">
   <h2>Smart Monitoring</h2>
@@ -574,38 +573,47 @@
   </div>
 </div>
 
-<!-- Slide 9: Redeploy & Secret Preservation -->
+<!-- Slide 9: Redeploy Cluster Example -->
 <div class="slide">
-  <h2>Redeploy &amp; Secret Preservation</h2>
-  <p style="font-size:1.2em; margin-bottom:20px;">The hardest workflow: remove a cluster and redeploy it without losing credentials.</p>
-  <div class="flow-diagram">
-    <div class="flow-box">Backup secrets</div>
-    <span class="flow-arrow">&rarr;</span>
-    <div class="flow-box skill">remove_cluster</div>
-    <span class="flow-arrow">&rarr;</span>
-    <div class="flow-box skill">monitor removal</div>
-    <span class="flow-arrow">&rarr;</span>
-    <div class="flow-box">Restore NS + secrets</div>
-    <span class="flow-arrow">&rarr;</span>
-    <div class="flow-box skill">deploy_cluster</div>
-  </div>
-  <div class="two-col" style="margin-top: 30px;">
-    <div class="card highlight">
-      <h3>Secret Flow</h3>
-      <ul>
-        <li>Backup: <code>oc get secret -o yaml</code> to <code>.temp/redeploy-&lt;name&gt;/</code></li>
-        <li>After removal: recreate namespace</li>
-        <li>Restore: <code>oc apply -f</code> from backup</li>
-        <li>Deploy detects existing secrets, skips zenity</li>
-      </ul>
+  <h2>Redeploy with Secret Preservation</h2>
+  <div class="two-col" style="gap: 40px;">
+    <div class="code-block" style="font-size: 0.85em; line-height: 1.6; margin: 0;">
+      <span class="prompt">User:</span> <span class="cmd">/redeploy_cluster</span> <span class="arg">sno1</span><br>
+      <br>
+      <span class="comment"># 1. Backup secrets</span><br>
+      <span class="output">Saved pull-secret to .temp/redeploy-sno1/</span><br>
+      <span class="output">Saved bmc-secret to .temp/redeploy-sno1/</span><br>
+      <br>
+      <span class="comment"># 2-3. Remove cluster + monitor removal</span><br>
+      <span class="output">[main def5678] removing cluster sno1</span><br>
+      <span class="output">ArgoCD sync with prune...</span><br>
+      <span class="output">Monitoring... &#x2796; NOT DEPLOYED</span><br>
+      <br>
+      <span class="comment"># 4-5. Restore namespace + secrets</span><br>
+      <span class="output">Namespace sno1 created</span><br>
+      <span class="output">Secrets restored from backup</span><br>
+      <br>
+      <span class="comment"># 6. Deploy (secrets already in place)</span><br>
+      <span class="output">Secrets exist, skipping credential dialog</span><br>
+      <span class="output">&#x1F680; INSTALLING (35%) ... (65%) ... &#x2705; INSTALLED</span>
     </div>
-    <div class="card">
-      <h3>Why It Matters</h3>
+    <div>
+      <h3>7 Automated Steps</h3>
+      <ul>
+        <li><strong>Backup secrets</strong> to .temp/redeploy-sno1/</li>
+        <li><strong>/remove_cluster</strong> &mdash; full removal flow</li>
+        <li><strong>/visualize_cluster_status</strong> &mdash; wait for NOT DEPLOYED</li>
+        <li><strong>Recreate namespace</strong> if deleted</li>
+        <li><strong>Restore secrets</strong> from backup</li>
+        <li><strong>/deploy_cluster</strong> &mdash; full deploy (no credential dialog)</li>
+        <li><strong>Report complete</strong></li>
+      </ul>
+      <h3 style="margin-top: 20px;">Why It Matters</h3>
       <ul>
         <li>BMC credentials are entered once via GUI</li>
         <li>Pull secrets come from user's auth.json</li>
         <li>Without preservation, user re-enters everything</li>
-        <li>Redeploy becomes a one-command operation</li>
+        <li>One command: full remove + redeploy cycle</li>
       </ul>
     </div>
   </div>
@@ -688,6 +696,19 @@
       <li>Real-time parallel monitoring with rich formatted output</li>
       <li>GitOps-native: every change is a commit, every sync is tracked</li>
     </ul>
+  </div>
+</div>
+
+<!-- Slide: Questions -->
+<div class="slide title-slide">
+  <h1>Questions?</h1>
+  <p class="subtitle" style="margin-top: 20px;">Thank you!</p>
+  <div style="margin-top: 40px; text-align: center;">
+    <p style="font-size: 1.3em; color: #073642; font-weight: 600;">Jose Gato Luis</p>
+    <p style="font-size: 1.1em; color: #93a1a1;">jgato@redhat.com</p>
+    <div style="margin-top: 30px;">
+      <p style="font-size: 1.1em; color: #268bd2; font-family: 'Fira Code', monospace;">github.com/jgato/ztp-cluster-automation</p>
+    </div>
   </div>
 </div>
 
