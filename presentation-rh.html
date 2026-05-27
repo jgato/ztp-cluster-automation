@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZTP Cluster Automation with Claude Code</title>
+  <link href="https://cdn.jsdelivr.net/npm/@rhds/tokens@3.0.2/css/global.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;700;900&family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* === RESET & BASE === */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100vw; height: 100vh; overflow: hidden; }
+
+    /* === COLOR PALETTE: CORE LIGHT === */
+    :root {
+      color-scheme: light;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f2f2f2;
+      --bg-surface: #e0e0e0;
+      --text-primary: #151515;
+      --text-secondary: #4d4d4d;
+      --text-muted: #707070;
+      --accent: #ee0000;
+      --accent-dark: #a60000;
+      --accent-light: #f56e6e;
+      --tag-border: #c7c7c7;
+      --icon-filter: none;
+      --icon-filter-accent: invert(12%) sepia(100%) saturate(10000%) hue-rotate(0deg) brightness(95%);
+      --font-display: var(--rh-font-family-heading, 'Red Hat Display', sans-serif);
+      --font-body: var(--rh-font-family-body-text, 'Red Hat Text', sans-serif);
+      --font-mono: var(--rh-font-family-code, 'Red Hat Mono', monospace);
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* === DECK & SLIDES === */
+    .deck { position: relative; width: 100%; height: 100%; }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      padding: var(--rh-space-4xl, 80px) var(--rh-space-3xl, 64px);
+      background: var(--bg-primary);
+      overflow: hidden;
+      gap: var(--rh-space-md, 16px);
+    }
+    .slide.active { display: flex; }
+
+    .slide::before {
+      content: '';
+      position: absolute;
+      top: -20%;
+      right: -10%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(ellipse, rgba(238,0,0,0.04) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .slide:nth-child(even)::before { top: auto; bottom: -20%; left: -10%; right: auto; }
+    .slide:first-child::before { background: radial-gradient(ellipse, rgba(238,0,0,0.06) 0%, transparent 70%); }
+    .slide > * { position: relative; z-index: 1; }
+
+    /* === TYPOGRAPHY === */
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+    h2 {
+      font-family: var(--font-display);
+      font-size: var(--rh-font-size-heading-lg, 2rem);
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--text-primary);
+    }
+    h3 {
+      font-family: var(--font-display);
+      font-size: var(--rh-font-size-heading-sm, 1.25rem);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--rh-space-xs, 4px);
+    }
+    p {
+      font-family: var(--font-body);
+      font-size: var(--rh-font-size-body-text-lg, 1.125rem);
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-width: 72ch;
+    }
+    .accent { color: var(--accent); }
+    .subtitle {
+      font-family: var(--font-body);
+      font-size: var(--rh-font-size-body-text-xl, 1.25rem);
+      color: var(--text-muted);
+      max-width: 60ch;
+    }
+
+    /* === SLIDE LABEL === */
+    .slide-label {
+      font-family: var(--font-mono);
+      font-size: var(--rh-font-size-body-text-xs, 0.75rem);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    /* === LOGO === */
+    .rh-logo { height: 28px; width: auto; }
+    .rh-logo.small { height: 20px; }
+    .rh-logo.large { height: 40px; }
+
+    /* === ICONS === */
+    .rh-icon { height: 48px; width: 48px; filter: var(--icon-filter); vertical-align: middle; }
+    .rh-icon.small { height: 24px; width: 24px; }
+    .rh-icon.medium { height: 48px; width: 48px; }
+    .rh-icon.large { height: 64px; width: 64px; }
+    .rh-icon.xl { height: 96px; width: 96px; }
+    .rh-icon.accent { filter: var(--icon-filter-accent); }
+
+    /* === TITLE SLIDE === */
+    .title-slide { text-align: left; padding-top: 120px; }
+    .title-slide h1 { font-size: clamp(2.8rem, 5vw, 4rem); margin-bottom: var(--rh-space-md, 16px); }
+    .breadcrumb {
+      position: absolute;
+      top: 40px;
+      left: 64px;
+      display: flex;
+      align-items: center;
+      gap: var(--rh-space-sm, 8px);
+      font-family: var(--font-mono);
+      font-size: var(--rh-font-size-body-text-xs, 0.75rem);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .attribution {
+      position: absolute;
+      bottom: 40px;
+      left: 64px;
+      font-family: var(--font-body);
+      font-size: var(--rh-font-size-body-text-sm, 0.875rem);
+      color: var(--text-muted);
+    }
+
+    /* === TAGS === */
+    .tag {
+      display: inline-block;
+      padding: var(--rh-space-xs, 4px) var(--rh-space-md, 16px);
+      border: var(--rh-border-width-sm, 1px) solid var(--tag-border);
+      border-radius: var(--rh-border-radius-pill, 64px);
+      font-family: var(--font-mono);
+      font-size: var(--rh-font-size-body-text-xs, 0.75rem);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .tag.accent { border-color: var(--accent); color: var(--accent); }
+    .tags { display: flex; flex-wrap: wrap; gap: var(--rh-space-sm, 8px); }
+
+    /* === CONTENT GRID === */
+    .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--rh-space-2xl, 48px); }
+    .content-grid.three { grid-template-columns: 1fr 1fr 1fr; gap: var(--rh-space-xl, 32px); }
+
+    /* === CARDS === */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--tag-border);
+      border-radius: var(--rh-border-radius-default, 3px);
+      padding: var(--rh-space-lg, 24px);
+    }
+    .card h3 { margin-bottom: var(--rh-space-sm, 8px); }
+    .card p { font-size: var(--rh-font-size-body-text-md, 1rem); max-width: none; }
+    .card .card-icon { margin-bottom: var(--rh-space-sm, 8px); }
+
+    /* === BULLET LIST === */
+    .bullet-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--rh-space-sm, 8px); }
+    .bullet-list li {
+      position: relative;
+      padding-left: 24px;
+      font-family: var(--font-body);
+      font-size: var(--rh-font-size-body-text-lg, 1.125rem);
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+    .bullet-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.65em;
+      width: 12px;
+      height: 2px;
+      background: var(--accent);
+    }
+    .bullet-list li strong { color: var(--text-primary); }
+    .bullet-list.compact li { font-size: var(--rh-font-size-body-text-md, 1rem); }
+
+    /* === FLOW DIAGRAM === */
+    .flow-row { display: flex; align-items: stretch; justify-content: center; gap: var(--rh-space-sm, 8px); flex-wrap: wrap; }
+    .flow-box {
+      background: rgba(242,242,242,0.8);
+      border: 1px solid #c7c7c7;
+      border-radius: var(--rh-border-radius-default, 3px);
+      padding: var(--rh-space-md, 16px);
+      text-align: center;
+      min-width: 130px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--rh-space-xs, 4px);
+    }
+    .flow-box h4 {
+      font-family: var(--font-display);
+      font-size: var(--rh-font-size-body-text-md, 1rem);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .flow-box p { font-size: var(--rh-font-size-body-text-sm, 0.875rem); color: var(--text-muted); max-width: none; }
+    .flow-box.highlight { border-color: var(--accent); border-width: 2px; }
+    .flow-arrow { font-size: 1.5rem; color: var(--text-muted); display: flex; align-items: center; }
+
+    /* === CODE BLOCK === */
+    pre.code-block {
+      background: var(--bg-secondary);
+      border: 1px solid var(--tag-border);
+      border-radius: var(--rh-border-radius-default, 3px);
+      padding: var(--rh-space-lg, 24px);
+      font-family: var(--font-mono);
+      font-size: var(--rh-font-size-body-text-sm, 0.875rem);
+      line-height: 1.7;
+      color: var(--text-secondary);
+      overflow: hidden;
+      white-space: pre;
+      margin: 0;
+    }
+    .code-comment { color: var(--text-muted); }
+    .code-cmd { color: var(--accent); font-weight: 700; }
+    .code-arg { color: var(--text-primary); }
+    .code-output { color: var(--text-secondary); }
+    .code-prompt { color: var(--text-muted); }
+    .code-key { color: var(--text-primary); font-weight: 500; }
+
+    /* === TABLE === */
+    table { width: 100%; border-collapse: collapse; font-family: var(--font-body); }
+    th {
+      text-align: left;
+      padding: var(--rh-space-sm, 8px) var(--rh-space-md, 16px);
+      font-family: var(--font-display);
+      font-size: var(--rh-font-size-body-text-md, 1rem);
+      font-weight: 700;
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+    }
+    td {
+      padding: var(--rh-space-sm, 8px) var(--rh-space-md, 16px);
+      font-size: var(--rh-font-size-body-text-sm, 0.875rem);
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--tag-border);
+    }
+    td code {
+      font-family: var(--font-mono);
+      background: var(--bg-secondary);
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 0.85em;
+      color: var(--accent);
+    }
+
+    /* === STEP LIST === */
+    .step-list { display: flex; flex-direction: column; gap: var(--rh-space-xs, 4px); }
+    .step-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--tag-border);
+      border-radius: var(--rh-border-radius-default, 3px);
+      padding: var(--rh-space-sm, 8px) var(--rh-space-md, 16px);
+      font-family: var(--font-mono);
+      font-size: var(--rh-font-size-body-text-xs, 0.75rem);
+      color: var(--text-secondary);
+    }
+    .step-item.script { border-left: 3px solid #2aa198; }
+    .step-item.skill { border-left: 3px solid var(--accent); }
+
+    /* === MONITOR VIZ === */
+    .monitor-viz {
+      background: var(--bg-secondary);
+      border: 1px solid var(--tag-border);
+      border-radius: var(--rh-border-radius-default, 3px);
+      padding: var(--rh-space-lg, 24px);
+      font-family: var(--font-mono);
+      font-size: var(--rh-font-size-body-text-sm, 0.875rem);
+      line-height: 1.6;
+      color: var(--text-secondary);
+      overflow: hidden;
+    }
+    .monitor-viz .viz-header { font-weight: 700; color: var(--text-primary); }
+    .monitor-viz .viz-ok { color: #2aa198; }
+    .monitor-viz .viz-progress { color: #b58900; }
+    .monitor-viz .viz-wait { color: #268bd2; }
+
+    /* === BIG NUMBERS === */
+    .stat-row { display: flex; justify-content: center; gap: var(--rh-space-3xl, 64px); text-align: center; }
+    .stat-item { flex: 1; }
+    .big-number {
+      font-family: var(--font-display);
+      font-size: clamp(4rem, 8vw, 6rem);
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .big-number-context {
+      font-family: var(--font-body);
+      font-size: var(--rh-font-size-body-text-lg, 1.125rem);
+      color: var(--text-muted);
+      margin-top: var(--rh-space-sm, 8px);
+    }
+
+    /* === THANK YOU SLIDE === */
+    .thank-you-slide { text-align: center; align-items: center; justify-content: center; }
+    .thank-you-slide h1 { font-size: clamp(3rem, 6vw, 5rem); }
+    .thank-you-slide::before {
+      background: radial-gradient(ellipse, rgba(238,0,0,0.06) 0%, transparent 70%);
+      top: -30%; right: -15%; width: 80%; height: 80%;
+    }
+    .author-block { margin-top: var(--rh-space-xl, 32px); color: var(--text-muted); font-size: var(--rh-font-size-body-text-lg, 1.125rem); }
+    .author-block .name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--text-primary);
+      font-size: var(--rh-font-size-heading-sm, 1.25rem);
+    }
+    .logo-footer { margin-top: var(--rh-space-2xl, 48px); }
+
+    /* === DEMO SLIDE === */
+    .demo-slide { text-align: center; align-items: center; }
+    .demo-slide pre.code-block { text-align: left; max-width: 700px; width: 100%; }
+
+    /* === VIDEO CONTAINER === */
+    .video-container {
+      position: relative; width: 100%; max-width: 960px; aspect-ratio: 16 / 9;
+      border-radius: var(--rh-border-radius-default, 3px); overflow: hidden;
+      box-shadow: var(--rh-box-shadow-lg, 0 6px 8px 2px rgba(21,21,21,0.3));
+      background: var(--bg-secondary); align-self: center;
+    }
+    .video-container iframe, .video-container video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+    .video-thumbnail { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+    .video-play-btn {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 80px; height: 80px; background: rgba(238,0,0,0.9); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; z-index: 2;
+      transition: background 0.2s ease;
+    }
+    .video-play-btn::after {
+      content: ''; display: block; width: 0; height: 0;
+      border-style: solid; border-width: 14px 0 14px 24px;
+      border-color: transparent transparent transparent #fff; margin-left: 4px;
+    }
+    .video-container:hover .video-play-btn { background: rgba(238,0,0,1); }
+
+    /* === MEDIA CONTAINER === */
+    .media-container {
+      display: flex; justify-content: center; align-items: center;
+      flex: 1; width: 100%; max-height: 65vh;
+      padding: var(--rh-space-md, 16px) 0; align-self: center;
+    }
+    .slide-media {
+      display: block; max-width: 90%; max-height: 100%; object-fit: contain;
+      border-radius: var(--rh-border-radius-default, 3px);
+      box-shadow: var(--rh-box-shadow-lg, 0 6px 8px 2px rgba(21,21,21,0.3));
+    }
+    .media-caption {
+      font-family: var(--font-body); font-size: var(--rh-font-size-body-text-lg, 1.125rem);
+      color: var(--text-secondary); text-align: center; margin-top: var(--rh-space-md, 16px);
+      max-width: 720px; align-self: center;
+    }
+
+    /* === CONTROLS === */
+    .controls {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: var(--rh-space-md, 16px) var(--rh-space-3xl, 64px);
+      font-family: var(--font-mono);
+      font-size: var(--rh-font-size-body-text-xs, 0.75rem);
+      color: var(--text-muted); z-index: 50;
+    }
+    .progress .current { color: var(--accent); font-weight: 700; }
+
+    /* === NOTES PANEL === */
+    .notes-panel {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      max-height: 30vh; background: var(--bg-secondary);
+      border-top: 2px solid var(--accent);
+      padding: var(--rh-space-lg, 24px) var(--rh-space-3xl, 64px);
+      overflow-y: auto; transform: translateY(100%);
+      transition: transform 0.3s ease; z-index: 100;
+      font-family: var(--font-body);
+      font-size: var(--rh-font-size-body-text-sm, 0.875rem);
+      color: var(--text-secondary); line-height: 1.6;
+    }
+    .notes-panel.visible { transform: translateY(0); }
+    .notes-panel a { color: var(--accent); }
+    .notes-panel strong { color: var(--text-primary); }
+
+    /* === ANIMATIONS === */
+    .slide .animate-in { opacity: 0; transform: translateY(20px); }
+    .slide.active .animate-in { animation: fadeSlideUp 0.6s ease-out forwards; }
+    .slide.active .animate-in:nth-child(2) { animation-delay: 0.1s; }
+    .slide.active .animate-in:nth-child(3) { animation-delay: 0.2s; }
+    .slide.active .animate-in:nth-child(4) { animation-delay: 0.3s; }
+    .slide.active .animate-in:nth-child(5) { animation-delay: 0.4s; }
+    .slide.active .animate-in:nth-child(6) { animation-delay: 0.5s; }
+    .slide.active .animate-in:nth-child(7) { animation-delay: 0.6s; }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === SOURCE === */
+    .source {
+      font-family: var(--font-body);
+      font-size: var(--rh-font-size-body-text-sm, 0.875rem);
+      color: var(--text-muted);
+      margin-top: auto;
+    }
+
+    /* === PRINT PREVIEW HYGIENE === */
+    body.printing .deck { visibility: hidden; }
+
+    /* === PRINT / PDF EXPORT === */
+    @media print {
+      body.printing .deck, body.printing .slide { visibility: visible !important; }
+      @page { size: 13.33in 7.5in; margin: 0; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      html, body { height: auto !important; width: auto !important; overflow: visible !important; background: #fff !important; }
+      .deck { height: auto !important; width: auto !important; position: static !important; overflow: visible !important; }
+      .slide {
+        display: flex !important; position: relative !important; inset: auto !important;
+        width: 13.33in !important; height: 7.5in !important;
+        padding: 0.55in 0.85in !important; gap: 0.14in !important;
+        box-sizing: border-box !important;
+        break-after: page; page-break-after: always;
+        break-inside: avoid; page-break-inside: avoid;
+        overflow: hidden !important;
+      }
+      .slide:last-child { break-after: auto; page-break-after: auto; }
+      .slide::before, .slide::after { display: none !important; }
+
+      h1 { font-size: 48pt !important; line-height: 1.05 !important; letter-spacing: -0.02em; }
+      h2 { font-size: 32pt !important; line-height: 1.1 !important; }
+      h3 { font-size: 16pt !important; line-height: 1.2 !important; }
+      .title-slide h1 { font-size: 54pt !important; }
+      .subtitle, p { font-size: 12pt !important; line-height: 1.45 !important; }
+      .big-number { font-size: 80pt !important; line-height: 0.9 !important; letter-spacing: -0.03em; }
+      .big-number-context { font-size: 11pt !important; }
+      .slide-label, .breadcrumb { font-size: 9pt !important; letter-spacing: 0.1em; }
+      .attribution, .source, .tag { font-size: 8pt !important; }
+      .thank-you-slide h1 { font-size: 60pt !important; }
+      .author-block { font-size: 12pt !important; }
+      .author-block .name { font-size: 14pt !important; }
+
+      .bullet-list { gap: 6pt !important; max-width: none !important; }
+      .bullet-list li { padding-left: 18pt !important; font-size: 11pt !important; line-height: 1.45 !important; }
+      .bullet-list li::before {
+        content: '' !important; position: absolute !important; left: 0 !important; top: 0.7em !important;
+        width: 10pt !important; height: 2pt !important; background: #ee0000 !important; border-radius: 0 !important;
+      }
+      .bullet-list.compact li { font-size: 10pt !important; }
+
+      .content-grid { gap: 0.25in !important; }
+      .content-grid.three { gap: 0.18in !important; }
+      .card { padding: 0.18in !important; }
+      .card h3 { font-size: 12pt !important; }
+      .card p { font-size: 9pt !important; line-height: 1.35 !important; }
+
+      pre.code-block { font-size: 8pt !important; line-height: 1.45 !important; padding: 0.16in !important; overflow: visible !important; }
+      .monitor-viz { font-size: 8pt !important; line-height: 1.4 !important; padding: 0.16in !important; }
+
+      th { font-size: 10pt !important; padding: 4pt 8pt !important; }
+      td { font-size: 9pt !important; padding: 4pt 8pt !important; }
+      td code { font-size: 8pt !important; }
+
+      .flow-box { padding: 0.12in !important; min-width: 0 !important; }
+      .flow-box h4 { font-size: 10pt !important; }
+      .flow-box p { font-size: 8pt !important; line-height: 1.3 !important; }
+      .flow-arrow { font-size: 12pt !important; }
+
+      .step-item { font-size: 8pt !important; padding: 4pt 8pt !important; }
+      .stat-row { gap: 0.4in !important; }
+
+      .breadcrumb { top: 0.4in !important; left: 0.85in !important; }
+      .attribution { bottom: 0.4in !important; left: 0.85in !important; }
+
+      .slide .animate-in, .slide.active .animate-in {
+        animation: none !important; opacity: 1 !important; transform: none !important;
+      }
+      .controls, .nav-hint, .notes-panel { display: none !important; }
+
+      .video-container .video-play-btn, .video-container iframe { display: none !important; }
+      .video-container { aspect-ratio: auto; max-height: 4.5in; }
+      .video-container img { max-height: 4.5in; object-fit: contain; }
+      .video-container[data-video-url]::after {
+        content: "\25B6  " attr(data-video-url); display: block;
+        font-family: var(--font-mono); font-size: 10pt; color: #6a6e73;
+        margin-top: 6pt; word-break: break-all;
+      }
+      .media-container { max-height: 5in !important; page-break-inside: avoid; }
+      .media-container img, .slide-media { max-height: 5in; object-fit: contain; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck">
+
+    <!-- SLIDE 1: TITLE -->
+    <div class="slide title-slide" data-notes="<strong>Navigation:</strong> Arrow keys or click to navigate. Press N to toggle these contextual notes with references and links for each slide. Works in any modern browser &mdash; share the HTML file directly. For best results, use fullscreen (F11).<br><br>[IMAGE OPPORTUNITY] Prompt: Abstract network topology visualization with interconnected nodes forming a cluster pattern, clean white background, subtle red (#ee0000) accent lines, geometric minimalist style, 16:9 aspect ratio, no text">
+      <div class="breadcrumb animate-in">
+        <svg class="rh-logo small" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 613 145" role="img" aria-label="Red Hat"><title>Red Hat</title><path d="M127.47,83.49c12.51,0,30.61-2.58,30.61-17.46a14,14,0,0,0-.31-3.42l-7.45-32.36c-1.72-7.12-3.23-10.35-15.73-16.6C124.89,8.69,103.76.5,97.51.5,91.69.5,90,8,83.06,8c-6.68,0-11.64-5.6-17.89-5.6-6,0-9.91,4.09-12.93,12.5,0,0-8.41,23.72-9.49,27.16A6.43,6.43,0,0,0,42.53,44c0,9.22,36.3,39.45,84.94,39.45M160,72.07c1.73,8.19,1.73,9.05,1.73,10.13,0,14-15.74,21.77-36.43,21.77C78.54,104,37.58,76.6,37.58,58.49a18.45,18.45,0,0,1,1.51-7.33C22.27,52,.5,55,.5,74.22c0,31.48,74.59,70.28,133.65,70.28,45.28,0,56.7-20.48,56.7-36.65,0-12.72-11-27.16-30.83-35.78" fill="#e00"/><path d="M160,72.07c1.73,8.19,1.73,9.05,1.73,10.13,0,14-15.74,21.77-36.43,21.77C78.54,104,37.58,76.6,37.58,58.49a18.45,18.45,0,0,1,1.51-7.33l3.66-9.06A6.43,6.43,0,0,0,42.53,44c0,9.22,36.3,39.45,84.94,39.45,12.51,0,30.61-2.58,30.61-17.46a14,14,0,0,0-.31-3.42Z"/><path d="M579.74,92.8c0,11.89,7.15,17.67,20.19,17.67a52.11,52.11,0,0,0,11.89-1.68V95a24.84,24.84,0,0,1-7.68,1.16c-5.37,0-7.36-1.68-7.36-6.73V68.3h15.56V54.1H596.78v-18l-17,3.68V54.1H568.49V68.3h11.25Zm-53,.32c0-3.68,3.69-5.47,9.26-5.47a43.12,43.12,0,0,1,10.1,1.26v7.15a21.51,21.51,0,0,1-10.63,2.63c-5.46,0-8.73-2.1-8.73-5.57m5.2,17.56c6,0,10.84-1.26,15.36-4.31v3.37h16.82V74.08c0-13.56-9.14-21-24.39-21-8.52,0-16.94,2-26,6.1l6.1,12.52c6.52-2.74,12-4.42,16.83-4.42,7,0,10.62,2.73,10.62,8.31v2.73a49.53,49.53,0,0,0-12.62-1.58c-14.31,0-22.93,6-22.93,16.73,0,9.78,7.78,17.24,20.19,17.24m-92.44-.94h18.09V80.92h30.29v28.82H506V36.12H487.93V64.41H457.64V36.12H439.55ZM370.62,81.87c0-8,6.31-14.1,14.62-14.1A17.22,17.22,0,0,1,397,72.09V91.54A16.36,16.36,0,0,1,385.24,96c-8.2,0-14.62-6.1-14.62-14.09m26.61,27.87h16.83V32.44l-17,3.68V57.05a28.3,28.3,0,0,0-14.2-3.68c-16.19,0-28.92,12.51-28.92,28.5a28.25,28.25,0,0,0,28.4,28.6,25.12,25.12,0,0,0,14.93-4.83ZM320,67c5.36,0,9.88,3.47,11.67,8.83H308.47C310.15,70.3,314.36,67,320,67M291.33,82c0,16.2,13.25,28.82,30.28,28.82,9.36,0,16.2-2.53,23.25-8.42l-11.26-10c-2.63,2.74-6.52,4.21-11.14,4.21a14.39,14.39,0,0,1-13.68-8.83h39.65V83.55c0-17.67-11.88-30.39-28.08-30.39a28.57,28.57,0,0,0-29,28.81M262,51.58c6,0,9.36,3.78,9.36,8.31S268,68.2,262,68.2H244.11V51.58Zm-36,58.16h18.09V82.92h13.77l13.89,26.82H292l-16.2-29.45a22.27,22.27,0,0,0,13.88-20.72c0-13.25-10.41-23.45-26-23.45H226Z" fill="#151515"/></svg>
+        <span style="margin-left: 4px;">Red Hat</span>
+      </div>
+      <div class="slide-label animate-in">&mdash;&mdash; ZTP AUTOMATION &middot; 2026</div>
+      <h1 class="animate-in">ZTP Cluster <span class="accent">Automation</span><br>with Claude Code</h1>
+      <p class="subtitle animate-in">Intelligent lifecycle management for bare-metal OpenShift clusters using AI-powered skills and GitOps workflows</p>
+      <div class="tags animate-in">
+        <span class="tag accent">OpenShift</span>
+        <span class="tag">RHACM</span>
+        <span class="tag">ArgoCD</span>
+        <span class="tag">GitOps</span>
+        <span class="tag accent">Claude Code</span>
+      </div>
+      <div class="attribution animate-in">Jose Gato Luis &middot; Red Hat</div>
+    </div>
+
+    <!-- SLIDE 2: BACKGROUND -->
+    <div class="slide" data-notes="<strong>References:</strong><br>Kubernetes documentation: https://kubernetes.io/docs/<br>OpenShift documentation: https://docs.openshift.com/<br>ArgoCD documentation: https://argo-cd.readthedocs.io/<br><br>For this talk, think of OpenShift as Kubernetes with enterprise features baked in &mdash; integrated CI/CD, operator lifecycle, multi-cluster management, and security hardening.">
+      <div class="slide-label animate-in">&mdash;&mdash; FOUNDATIONS</div>
+      <h2 class="animate-in"><img class="rh-icon small accent" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/blueprints.svg" alt=""> The <span class="accent">Building Blocks</span></h2>
+      <div class="content-grid animate-in">
+        <div>
+          <h3>Kubernetes &amp; OpenShift</h3>
+          <p>Kubernetes is the standard for container orchestration. OpenShift builds on it with enterprise features: integrated CI/CD, operator lifecycle management, and multi-cluster capabilities.</p>
+          <p style="margin-top: 12px;">For this talk: <strong>OpenShift = Kubernetes + Enterprise Services</strong></p>
+        </div>
+        <div>
+          <h3>GitOps Methodology</h3>
+          <p>GitOps uses Git as the single source of truth for declarative infrastructure. The desired state is described in YAML files stored in a Git repository.</p>
+          <p style="margin-top: 12px;"><strong>Add a file</strong> that defines a cluster &rarr; installs the cluster.<br><strong>Remove the file</strong> &rarr; destroys the cluster.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: CONTEXT -->
+    <div class="slide" data-notes="<strong>References:</strong><br>RHACM Siteconfig Operator: https://docs.redhat.com/en/documentation/red_hat_advanced_cluster_management_for_kubernetes/2.14/html/multicluster_engine_operator_with_red_hat_advanced_cluster_management/siteconfig-intro<br><br>Telco and edge deployments can involve hundreds to thousands of single-node OpenShift clusters across distributed far-edge locations. Each cluster runs on a dedicated bare-metal server with BMC (Baseboard Management Controller) for out-of-band hardware control.">
+      <div class="slide-label animate-in">&mdash;&mdash; CONTEXT</div>
+      <h2 class="animate-in">Bare Metal Clusters Need a <span class="accent">Different Approach</span></h2>
+      <div class="content-grid three animate-in">
+        <div class="card">
+          <img class="rh-icon medium card-icon" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/server-stack.svg" alt="Servers">
+          <h3>Bare Metal at Scale</h3>
+          <p>Telco and edge deployments require hundreds of OpenShift clusters on bare-metal servers. Each needs BMC configuration, ISO booting, and full OS installation.</p>
+        </div>
+        <div class="card">
+          <img class="rh-icon medium card-icon" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/cluster.svg" alt="Cluster">
+          <h3>RHACM &amp; ZTP</h3>
+          <p>Red Hat Advanced Cluster Management provides Zero Touch Provisioning via the Siteconfig Operator. A single ClusterInstance CR defines the entire cluster.</p>
+        </div>
+        <div class="card">
+          <img class="rh-icon medium card-icon" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/code-branch.svg" alt="GitOps">
+          <h3>GitOps with ArgoCD</h3>
+          <p>Git is the single source of truth. ArgoCD watches the repository and reconciles state. Adding a line to <code style="font-family: var(--font-mono); color: var(--accent);">kustomization.yaml</code> deploys a cluster.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: THE PROBLEM -->
+    <div class="slide" data-notes="The repetitive cycle of edit-commit-push-sync-wait is the core pain point. Each cluster operation takes 45&ndash;90 minutes of active monitoring, during which the operator must stay alert for failures and re-trigger the entire process if something goes wrong.<br><br>[MEME OPPORTUNITY] A developer-waiting or this-is-fine meme could break tension after this dense problem slide.">
+      <div class="slide-label animate-in">&mdash;&mdash; THE PROBLEM</div>
+      <h2 class="animate-in"><img class="rh-icon small accent" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/automation.svg" alt=""> Manual Steps <span class="accent">Slow Everything Down</span></h2>
+      <div class="content-grid animate-in" style="align-items: start;">
+        <div>
+          <p style="margin-bottom: var(--rh-space-md, 16px);">RHACM manages clusters with ZTP GitOps. In practice, each operation still requires many manual steps.</p>
+          <h3>Manual Steps Per Operation</h3>
+          <ul class="bullet-list compact">
+            <li>Edit <strong>kustomization.yaml</strong> &mdash; comment or uncomment a line</li>
+            <li>Git commit and push the change</li>
+            <li>Sync the ArgoCD application</li>
+            <li>Monitor installation for ~45 minutes</li>
+            <li>If something fails, repeat from the top</li>
+            <li>Extract credentials when done</li>
+          </ul>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: var(--rh-space-md, 16px);">
+          <img class="slide-media" src="https://media1.tenor.com/m/RIS3mK855hYAAAAd/this-is-fine-fire.gif" alt="This is fine meme" style="max-height: 260px; border-radius: var(--rh-border-radius-default, 3px); box-shadow: var(--rh-box-shadow-md, 0 4px 6px 1px rgba(21,21,21,0.2));">
+          <p style="font-family: var(--font-mono); font-size: var(--rh-font-size-body-text-xs, 0.75rem); color: var(--text-muted);">Monitoring a bare-metal installation at minute 43</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: ARCHITECTURE -->
+    <div class="slide" data-notes="<strong>Assisted Service</strong> (formerly Assisted Installer) manages ISO generation, host discovery, and OpenShift installation on bare-metal hosts. BMC (Baseboard Management Controller) provides out-of-band hardware control via Redfish or IPMI protocols.<br><br>The full flow from git push to running cluster typically takes 45&ndash;90 minutes depending on hardware and network conditions.">
+      <div class="slide-label animate-in">&mdash;&mdash; ARCHITECTURE</div>
+      <h2 class="animate-in">From Git Commit to <span class="accent">Running Cluster</span></h2>
+      <p class="animate-in" style="font-size: var(--rh-font-size-body-text-md, 1rem);">End-to-end flow: from YAML in a repository to a running bare-metal OpenShift cluster</p>
+      <div class="flow-row animate-in">
+        <div class="flow-box">
+          <img class="rh-icon small" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/code-branch.svg" alt="">
+          <h4>Git Repository</h4>
+          <p>ClusterInstance CRs<br>kustomization.yaml</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box">
+          <img class="rh-icon small" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/lifecycle.svg" alt="">
+          <h4>OpenShift GitOps</h4>
+          <p>ArgoCD watches repo<br>and syncs CRs</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box highlight">
+          <img class="rh-icon small accent" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/cluster.svg" alt="">
+          <h4>RHACM</h4>
+          <p>Siteconfig Operator<br>processes ClusterInstance</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box">
+          <img class="rh-icon small" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/gear.svg" alt="">
+          <h4>Assisted Service</h4>
+          <p>ISO generation<br>bare-metal provisioning</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-box">
+          <img class="rh-icon small" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/server.svg" alt="">
+          <h4>Bare Metal Host</h4>
+          <p>Running OpenShift<br>SNO or MNO cluster</p>
+        </div>
+      </div>
+      <div class="animate-in" style="margin-top: var(--rh-space-lg, 24px);">
+        <ul class="bullet-list compact">
+          <li>ClusterInstance CR defines the desired cluster state</li>
+          <li>ArgoCD applies CRs to the hub cluster on every git push</li>
+          <li>Siteconfig Operator creates BareMetalHost, InfraEnv, AgentClusterInstall</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: CLUSTERINSTANCE CR -->
+    <div class="slide" data-notes="<strong>Full API reference:</strong> https://docs.redhat.com/en/documentation/red_hat_advanced_cluster_management_for_kubernetes/2.14/html/multicluster_engine_operator_with_red_hat_advanced_cluster_management/siteconfig-intro#siteconfig-cr-reference<br><br>The actual ClusterInstance CR is approximately 150 lines including network configuration, disk hints, installation parameters, and extra manifests. The Siteconfig Operator expands this single CR into BareMetalHost, InfraEnv, AgentClusterInstall, NMStateConfig, and more.">
+      <div class="slide-label animate-in">&mdash;&mdash; CLUSTERINSTANCE</div>
+      <h2 class="animate-in">One YAML Defines an <span class="accent">Entire Cluster</span></h2>
+      <div class="content-grid animate-in" style="gap: var(--rh-space-xl, 32px);">
+<pre class="code-block" style="font-size: 0.8rem; line-height: 1.5;"><span class="code-key">apiVersion:</span> siteconfig.open-cluster-management.io/v1alpha1
+<span class="code-key">kind:</span> <span class="code-cmd">ClusterInstance</span>
+<span class="code-key">metadata:</span>
+  <span class="code-key">name:</span> sno1
+  <span class="code-key">namespace:</span> sno1
+<span class="code-key">spec:</span>
+  <span class="code-key">baseDomain:</span> example.com
+  <span class="code-key">clusterNetwork:</span>
+    - cidr: 10.128.0.0/14
+  <span class="code-key">nodes:</span>
+    - <span class="code-key">hostName:</span> sno1.example.com
+      <span class="code-key">bmcAddress:</span> redfish://192.168.1.10/...
+      <span class="code-key">bmcCredentialsName:</span>
+        name: sno1-bmc-secret
+      <span class="code-key">bootMACAddress:</span> aa:bb:cc:dd:ee:ff
+      <span class="code-key">role:</span> master
+      <span class="code-comment"># ... network config, disk hints, etc.</span></pre>
+        <div>
+          <h3>What This Defines</h3>
+          <ul class="bullet-list compact">
+            <li><strong>Identity:</strong> cluster name, domain, namespace</li>
+            <li><strong>Network:</strong> cluster CIDR, service network, DNS</li>
+            <li><strong>Hardware:</strong> BMC address for remote power control</li>
+            <li><strong>Credentials:</strong> reference to BMC secret</li>
+            <li><strong>Boot:</strong> MAC address, disk, NIC configuration</li>
+          </ul>
+          <h3 style="margin-top: var(--rh-space-lg, 24px);">From YAML to Running Cluster</h3>
+          <div class="flow-row" style="justify-content: flex-start; margin-top: var(--rh-space-sm, 8px);">
+            <div class="flow-box" style="padding: 8px 12px; min-width: auto;"><p>Push YAML</p></div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-box" style="padding: 8px 12px; min-width: auto;"><p>ArgoCD syncs</p></div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-box" style="padding: 8px 12px; min-width: auto;"><p>Siteconfig expands</p></div>
+            <div class="flow-arrow">&rarr;</div>
+            <div class="flow-box" style="padding: 8px 12px; min-width: auto;"><p>Host boots</p></div>
+          </div>
+          <p style="font-size: var(--rh-font-size-body-text-sm, 0.875rem); margin-top: var(--rh-space-md, 16px);">The real CR is ~150 lines. Siteconfig Operator expands it into BareMetalHost, InfraEnv, AgentClusterInstall, and more.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: SKILLS -->
+    <div class="slide" data-notes="<strong>Claude Code Skills:</strong> Each skill is defined in a SKILL.md file with frontmatter (name, description, allowed-tools, model) and natural language instructions. Parent skills orchestrate complex multi-step workflows and can invoke child skills. Child skills handle focused, reusable operations with scoped permissions and cost-optimized models (Haiku).<br><br>The allowed-tools frontmatter restricts what tools a skill can use, acting as a security sandbox even if broader permissions exist globally.">
+      <div class="slide-label animate-in">&mdash;&mdash; CLAUDE CODE SKILLS</div>
+      <h2 class="animate-in"><img class="rh-icon small accent" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/command-line.svg" alt=""> Seven Skills Cover the <span class="accent">Full Lifecycle</span></h2>
+      <table class="animate-in">
+        <tr><th>Skill</th><th>Type</th><th>Purpose</th></tr>
+        <tr><td><code>configure_environment</code></td><td>Setup</td><td>Validate kubeconfig, extract ArgoCD endpoint, SSO login</td></tr>
+        <tr><td><code>deploy_cluster</code></td><td>Parent (7 steps)</td><td>Full deployment: validate &rarr; secrets &rarr; kustomize &rarr; git &rarr; sync &rarr; monitor &rarr; credentials</td></tr>
+        <tr><td><code>remove_cluster</code></td><td>Parent (6 steps)</td><td>Full removal: validate &rarr; comment kustomize &rarr; git &rarr; sync with prune &rarr; monitor</td></tr>
+        <tr><td><code>redeploy_cluster</code></td><td>Parent (7 steps)</td><td>Orchestrates remove + deploy with secret preservation</td></tr>
+        <tr><td><code>sync_argocd</code></td><td>Child</td><td>Sync ArgoCD application, optional prune + wait</td></tr>
+        <tr><td><code>visualize_cluster_status</code></td><td>Child (read-only)</td><td>Parallel data collection, ANSI-formatted status tables</td></tr>
+        <tr><td><code>telco_hub_rds_status</code></td><td>Child (read-only)</td><td>Hub operator versions and CR statuses</td></tr>
+      </table>
+    </div>
+
+    <!-- SLIDE 8: DEPLOY EXAMPLE -->
+    <div class="slide" data-notes="[VIDEO OPPORTUNITY] A screencast of a real /deploy_cluster session would powerfully demonstrate the automation &mdash; showing all 7 steps executing automatically over 45 minutes.<br><br>The prepare_ztp.sh script handles credential management: if secrets already exist in the cluster (from a previous redeploy backup), it skips the zenity dialog entirely. New deployments prompt for BMC credentials via a GUI dialog.">
+      <div class="slide-label animate-in">&mdash;&mdash; DEPLOY WORKFLOW</div>
+      <h2 class="animate-in">Deploy a Cluster with <span class="accent">One Command</span></h2>
+      <div class="content-grid animate-in" style="gap: var(--rh-space-xl, 32px);">
+        <div style="display: flex; align-items: center; justify-content: center;">
+          <img class="slide-media" src="images/deploy-workflow-screenshot.png" alt="Deploy cluster skill in action — pre-validate, prepare secrets, update kustomization.yaml" style="max-height: 420px; border-radius: var(--rh-border-radius-default, 3px); box-shadow: var(--rh-box-shadow-lg, 0 6px 8px 2px rgba(21,21,21,0.3));">
+        </div>
+        <div>
+          <h3>7 Automated Steps</h3>
+          <div class="step-list">
+            <div class="step-item script">1. pre-validate.sh &mdash; checks manifest &amp; kustomization</div>
+            <div class="step-item script">2. prepare_ztp.sh &mdash; namespace + secrets (or restore)</div>
+            <div class="step-item">3. Edit kustomization.yaml &mdash; add cluster entry</div>
+            <div class="step-item">4. Git commit + push</div>
+            <div class="step-item skill">5. /sync_argocd &mdash; sync the clusters app</div>
+            <div class="step-item skill">6. /visualize_cluster_status &mdash; monitor (up to 3h)</div>
+            <div class="step-item script">7. extract-credentials.sh &mdash; kubeadmin + kubeconfig</div>
+          </div>
+          <p style="font-size: var(--rh-font-size-body-text-md, 1rem); margin-top: var(--rh-space-lg, 24px);"><strong>One command.</strong> Seven steps. ~45 minutes from YAML to running cluster.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 9: SMART MONITORING -->
+    <div class="slide" data-notes="The get-cluster-status.sh script uses background subshells with &amp; and wait to collect data from 6 Kubernetes resources simultaneously. Each resource query runs in parallel, cutting total collection time from ~12 seconds to ~2 seconds.<br><br>The adaptive interval system reduces unnecessary API calls during the long middle phase of installation (20&ndash;50 minutes) when status rarely changes.">
+      <div class="slide-label animate-in">&mdash;&mdash; MONITORING</div>
+      <h2 class="animate-in"><img class="rh-icon small accent" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/speedometer.svg" alt=""> Smart Monitoring Tracks <span class="accent">Six Resources</span> in Parallel</h2>
+      <div class="monitor-viz animate-in">
+<span class="viz-header">&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;</span>
+  &#x1F680; sno1 &#x2502; Status: <span class="viz-progress">INSTALLING (65%)</span> &#x2502; Started: 10:30Z
+<span class="viz-header">&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;&#x2501;</span>
+
+&#x1F4CB; <span class="viz-header">ClusterInstance</span>  Created: 10:25Z
+  <span class="viz-ok">&#x2713;</span> Validated  <span class="viz-ok">&#x2713;</span> Templates  <span class="viz-progress">&#x1F680;</span> Provisioning
+
+&#x1F4E6; <span class="viz-header">Core Resources</span>
+  &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+  &#x2502; BareMetalHost      &#x2502; <span class="viz-ok">&#x2713;</span>      &#x2502; provisioned           &#x2502;
+  &#x2502; InfraEnv           &#x2502; <span class="viz-ok">&#x2713;</span>      &#x2502; Image ready            &#x2502;
+  &#x2502; AgentClusterInst   &#x2502; <span class="viz-progress">&#x1F680;</span>    &#x2502; installing (65%)       &#x2502;
+  &#x2502; ManagedCluster     &#x2502; <span class="viz-wait">&#x23F3;</span>    &#x2502; Not ready              &#x2502;
+  &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;</div>
+      <div class="content-grid animate-in" style="margin-top: var(--rh-space-md, 16px);">
+        <div>
+          <h3>Adaptive Intervals</h3>
+          <p style="font-size: var(--rh-font-size-body-text-md, 1rem);">0&ndash;20 min: every 5 min &bull; 20&ndash;50 min: every 15 min &bull; 50+ min: every 5 min</p>
+        </div>
+        <div>
+          <h3>6 Resources in Parallel</h3>
+          <p style="font-size: var(--rh-font-size-body-text-md, 1rem);">ClusterInstance, BareMetalHost, InfraEnv, AgentClusterInstall, Agents, ManagedCluster</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 10: REDEPLOY -->
+    <div class="slide" data-notes="Secret preservation solves a real workflow pain: BMC credentials and pull secrets are entered once, then automatically preserved across redeploy cycles. The deploy_cluster skill detects existing secrets via oc get secret and skips the credential dialog.<br><br>The backup files are stored in .temp/redeploy-&lt;cluster-name&gt;/ and restored into the recreated namespace before the deploy skill runs.">
+      <div class="slide-label animate-in">&mdash;&mdash; REDEPLOY WORKFLOW</div>
+      <h2 class="animate-in">Redeploy Preserves <span class="accent">Credentials Automatically</span></h2>
+      <div class="content-grid animate-in" style="gap: var(--rh-space-xl, 32px);">
+<pre class="code-block" style="font-size: 0.78rem; line-height: 1.6;"><span class="code-prompt">User:</span> <span class="code-cmd">/redeploy_cluster</span> <span class="code-arg">sno1</span>
+
+<span class="code-comment"># 1. Backup secrets</span>
+<span class="code-output">Saved pull-secret to .temp/redeploy-sno1/</span>
+<span class="code-output">Saved bmc-secret to .temp/redeploy-sno1/</span>
+
+<span class="code-comment"># 2-3. Remove cluster + monitor</span>
+<span class="code-output">[main def5678] removing cluster sno1</span>
+<span class="code-output">ArgoCD sync with prune...</span>
+<span class="code-output">Monitoring... &#x2796; NOT DEPLOYED</span>
+
+<span class="code-comment"># 4-5. Restore namespace + secrets</span>
+<span class="code-output">Namespace sno1 created</span>
+<span class="code-output">Secrets restored from backup</span>
+
+<span class="code-comment"># 6. Deploy (secrets already in place)</span>
+<span class="code-output">Secrets exist, skipping dialog</span>
+<span class="code-output">Monitoring... &#x1F680; INSTALLING (35%)</span>
+<span class="code-output">Monitoring... &#x2705; INSTALLED</span></pre>
+        <div>
+          <h3>7 Automated Steps</h3>
+          <div class="step-list">
+            <div class="step-item">1. Backup secrets to .temp/redeploy-sno1/</div>
+            <div class="step-item skill">2. /remove_cluster &mdash; full removal flow</div>
+            <div class="step-item skill">3. /visualize_cluster_status &mdash; wait for NOT DEPLOYED</div>
+            <div class="step-item">4. Recreate namespace if deleted</div>
+            <div class="step-item">5. Restore secrets from backup</div>
+            <div class="step-item skill">6. /deploy_cluster &mdash; full deploy (no credential dialog)</div>
+            <div class="step-item">7. Report complete</div>
+          </div>
+          <h3 style="margin-top: var(--rh-space-lg, 24px);">Secret Preservation</h3>
+          <p style="font-size: var(--rh-font-size-body-text-sm, 0.875rem);">BMC and pull-secret credentials are backed up before removal and restored after. <strong>One command.</strong> Full remove + redeploy. No credentials re-entered.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 11: KEY LEARNINGS -->
+    <div class="slide" data-notes="<strong>Claude Code allowed-tools in SKILL.md:</strong> The allowed-tools frontmatter restricts what tools a skill can use, acting as a security sandbox. Parent skills list child skills in their allowed-tools to invoke them, but each child runs with its own scoped permissions.<br><br>The tension between LLM flexibility and operational determinism is the central design challenge. Scripts provide guardrails where reliability matters; natural language provides adaptability where flexibility matters.">
+      <div class="slide-label animate-in">&mdash;&mdash; LESSONS LEARNED</div>
+      <h2 class="animate-in"><img class="rh-icon small accent" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/brain.svg" alt=""> Lessons From Teaching an LLM to Be <span class="accent">Deterministic</span></h2>
+      <div class="content-grid three animate-in">
+        <div class="card">
+          <img class="rh-icon medium card-icon accent" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/run-pipeline.svg" alt="">
+          <h3>Making It Deterministic</h3>
+          <p>LLMs are not deterministic by nature. Non-deterministic behavior makes it hard to manage permissions and keep the agent under control. Sometimes it tries to solve problems it should not.</p>
+        </div>
+        <div class="card">
+          <img class="rh-icon medium card-icon accent" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/command-line.svg" alt="">
+          <h3>Scripts as Guardrails</h3>
+          <p>Natural language defines the workflow steps. But when reliability matters, bash scripts provide deterministic execution. Not as elegant, but the agent writes them for you anyway.</p>
+        </div>
+        <div class="card">
+          <img class="rh-icon medium card-icon accent" src="https://cdn.jsdelivr.net/npm/@rhds/icons@2.1.0/standard/padlock-locked.svg" alt="">
+          <h3>Permission Management</h3>
+          <p>You want to avoid *.* but also avoid being prompted at every step. Skills have their own allowed-tools scoping. Combine this with global settings for layered security.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 12: DEMO -->
+    <div class="slide demo-slide" data-notes="<strong>Demo environment:</strong> RHACM hub cluster with Siteconfig Operator and OpenShift GitOps (ArgoCD) configured. Target: Single-Node OpenShift on bare-metal via BMC/Redfish.<br><br>[MEME OPPORTUNITY] A fingers-crossed or it-works-on-my-machine meme could lighten the mood before the live demo.">
+      <div class="slide-label animate-in">&mdash;&mdash; LIVE DEMO</div>
+      <h1 class="animate-in" style="font-size: clamp(3rem, 6vw, 4.5rem);"><span class="accent">Demo</span></h1>
+      <p class="subtitle animate-in">Let&rsquo;s deploy a cluster</p>
+      <div class="content-grid animate-in" style="margin-top: var(--rh-space-lg, 24px); align-items: center;">
+<pre class="code-block" style="font-size: 0.78rem; line-height: 1.6;"><span class="code-prompt">$</span> <span class="code-cmd">/configure_environment</span> <span class="code-arg">/path/to/kubeconfig</span>
+<span class="code-output">Environment configured. ArgoCD: hub.apps.example.com</span>
+
+<span class="code-prompt">$</span> <span class="code-cmd">/deploy_cluster</span> <span class="code-arg">sno1</span>
+<span class="code-comment"># ... 7 automated steps, ~45 minutes ...</span>
+<span class="code-output">Deployment complete. Password: ****</span>
+
+<span class="code-prompt">$</span> <span class="code-cmd">show me the status of sno1</span>
+<span class="code-comment"># ... formatted ANSI status table ...</span></pre>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: var(--rh-space-md, 16px);">
+          <img class="slide-media" src="https://media1.tenor.com/m/wddvQsgJKXoAAAAd/it-works-on-my-machine-works.gif" alt="It works on my machine meme" style="max-height: 280px; border-radius: var(--rh-border-radius-default, 3px); box-shadow: var(--rh-box-shadow-md, 0 4px 6px 1px rgba(21,21,21,0.2));">
+          <p style="font-family: var(--font-mono); font-size: var(--rh-font-size-body-text-xs, 0.75rem); color: var(--text-muted);">Fingers crossed for the live demo</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 13: SUMMARY -->
+    <div class="slide" data-notes="<strong>Project context:</strong> 7 skills defined in .claude/skills/, 8 bash scripts for deterministic operations, full cluster lifecycle automation. Each skill is defined in a SKILL.md with frontmatter (name, description, allowed-tools, model) and natural language instructions.<br><br>The key insight: use scripts where determinism matters (validation, secrets, credentials) and natural language where flexibility matters (kustomization editing, git operations, monitoring interpretation).">
+      <div class="slide-label animate-in">&mdash;&mdash; SUMMARY</div>
+      <h2 class="animate-in">One Command, Seven Steps, <span class="accent">Full Automation</span></h2>
+      <div class="stat-row animate-in" style="margin: var(--rh-space-xl, 32px) 0;">
+        <div class="stat-item">
+          <div class="big-number">7</div>
+          <div class="big-number-context">Skills</div>
+        </div>
+        <div class="stat-item">
+          <div class="big-number">8</div>
+          <div class="big-number-context">Bash Scripts</div>
+        </div>
+        <div class="stat-item">
+          <div class="big-number">1</div>
+          <div class="big-number-context">Command to Deploy</div>
+        </div>
+      </div>
+      <ul class="bullet-list animate-in">
+        <li>Natural language interface to complex infrastructure operations</li>
+        <li>Deterministic scripts where reliability matters, LLM where flexibility matters</li>
+        <li>Full cluster lifecycle: deploy, remove, redeploy with secret preservation</li>
+        <li>GitOps-native: every change is a commit, every sync is tracked</li>
+      </ul>
+    </div>
+
+    <!-- SLIDE 14: THANK YOU -->
+    <div class="slide thank-you-slide" data-notes="<strong>Contact:</strong> jgato@redhat.com<br>Project powered by Claude Code (Anthropic)">
+      <h1 class="animate-in">Thank <span class="accent">You</span></h1>
+      <div class="author-block animate-in">
+        <div class="name">Jose Gato Luis</div>
+        <div>Red Hat</div>
+      </div>
+      <div class="logo-footer animate-in">
+        <svg class="rh-logo large" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 613 145" role="img" aria-label="Red Hat"><title>Red Hat</title><path d="M127.47,83.49c12.51,0,30.61-2.58,30.61-17.46a14,14,0,0,0-.31-3.42l-7.45-32.36c-1.72-7.12-3.23-10.35-15.73-16.6C124.89,8.69,103.76.5,97.51.5,91.69.5,90,8,83.06,8c-6.68,0-11.64-5.6-17.89-5.6-6,0-9.91,4.09-12.93,12.5,0,0-8.41,23.72-9.49,27.16A6.43,6.43,0,0,0,42.53,44c0,9.22,36.3,39.45,84.94,39.45M160,72.07c1.73,8.19,1.73,9.05,1.73,10.13,0,14-15.74,21.77-36.43,21.77C78.54,104,37.58,76.6,37.58,58.49a18.45,18.45,0,0,1,1.51-7.33C22.27,52,.5,55,.5,74.22c0,31.48,74.59,70.28,133.65,70.28,45.28,0,56.7-20.48,56.7-36.65,0-12.72-11-27.16-30.83-35.78" fill="#e00"/><path d="M160,72.07c1.73,8.19,1.73,9.05,1.73,10.13,0,14-15.74,21.77-36.43,21.77C78.54,104,37.58,76.6,37.58,58.49a18.45,18.45,0,0,1,1.51-7.33l3.66-9.06A6.43,6.43,0,0,0,42.53,44c0,9.22,36.3,39.45,84.94,39.45,12.51,0,30.61-2.58,30.61-17.46a14,14,0,0,0-.31-3.42Z"/><path d="M579.74,92.8c0,11.89,7.15,17.67,20.19,17.67a52.11,52.11,0,0,0,11.89-1.68V95a24.84,24.84,0,0,1-7.68,1.16c-5.37,0-7.36-1.68-7.36-6.73V68.3h15.56V54.1H596.78v-18l-17,3.68V54.1H568.49V68.3h11.25Zm-53,.32c0-3.68,3.69-5.47,9.26-5.47a43.12,43.12,0,0,1,10.1,1.26v7.15a21.51,21.51,0,0,1-10.63,2.63c-5.46,0-8.73-2.1-8.73-5.57m5.2,17.56c6,0,10.84-1.26,15.36-4.31v3.37h16.82V74.08c0-13.56-9.14-21-24.39-21-8.52,0-16.94,2-26,6.1l6.1,12.52c6.52-2.74,12-4.42,16.83-4.42,7,0,10.62,2.73,10.62,8.31v2.73a49.53,49.53,0,0,0-12.62-1.58c-14.31,0-22.93,6-22.93,16.73,0,9.78,7.78,17.24,20.19,17.24m-92.44-.94h18.09V80.92h30.29v28.82H506V36.12H487.93V64.41H457.64V36.12H439.55ZM370.62,81.87c0-8,6.31-14.1,14.62-14.1A17.22,17.22,0,0,1,397,72.09V91.54A16.36,16.36,0,0,1,385.24,96c-8.2,0-14.62-6.1-14.62-14.09m26.61,27.87h16.83V32.44l-17,3.68V57.05a28.3,28.3,0,0,0-14.2-3.68c-16.19,0-28.92,12.51-28.92,28.5a28.25,28.25,0,0,0,28.4,28.6,25.12,25.12,0,0,0,14.93-4.83ZM320,67c5.36,0,9.88,3.47,11.67,8.83H308.47C310.15,70.3,314.36,67,320,67M291.33,82c0,16.2,13.25,28.82,30.28,28.82,9.36,0,16.2-2.53,23.25-8.42l-11.26-10c-2.63,2.74-6.52,4.21-11.14,4.21a14.39,14.39,0,0,1-13.68-8.83h39.65V83.55c0-17.67-11.88-30.39-28.08-30.39a28.57,28.57,0,0,0-29,28.81M262,51.58c6,0,9.36,3.78,9.36,8.31S268,68.2,262,68.2H244.11V51.58Zm-36,58.16h18.09V82.92h13.77l13.89,26.82H292l-16.2-29.45a22.27,22.27,0,0,0,13.88-20.72c0-13.25-10.41-23.45-26-23.45H226Z" fill="#151515"/></svg>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="controls">
+    <div class="nav-hint">&larr; &rarr; or click to navigate &middot; N for additional context</div>
+    <div class="progress"><span class="current">1</span> / <span class="total">14</span></div>
+  </div>
+
+  <div class="notes-panel"></div>
+
+  <script>
+    (function() {
+      var slides = document.querySelectorAll('.slide');
+      var currentEl = document.querySelector('.current');
+      var totalEl = document.querySelector('.total');
+      var notesPanel = document.querySelector('.notes-panel');
+      var idx = 0;
+      var notesVisible = false;
+
+      totalEl.textContent = slides.length;
+
+      function pauseAllMedia() {
+        document.querySelectorAll('.slide:not(.active) video').forEach(function(v) { v.pause(); });
+        document.querySelectorAll('.slide:not(.active) iframe').forEach(function(f) {
+          f.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+          f.contentWindow.postMessage('{"method":"pause"}', '*');
+        });
+      }
+
+      function playActiveMedia() {
+        document.querySelectorAll('.slide.active video').forEach(function(v) { v.play(); });
+        document.querySelectorAll('.slide.active iframe').forEach(function(f) {
+          f.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+          f.contentWindow.postMessage('{"method":"play"}', '*');
+        });
+      }
+
+      function show(i) {
+        slides.forEach(function(s, j) {
+          s.classList.toggle('active', j === i);
+          s.style.display = j === i ? 'flex' : 'none';
+        });
+        currentEl.textContent = i + 1;
+        pauseAllMedia();
+        playActiveMedia();
+        if (notesVisible && notesPanel) {
+          var note = slides[i].dataset.notes || '';
+          notesPanel.innerHTML = note;
+        }
+      }
+
+      function next() { if (idx < slides.length - 1) { idx++; show(idx); } }
+      function prev() { if (idx > 0) { idx--; show(idx); } }
+
+      // Click-to-play for video thumbnails
+      document.addEventListener('click', function(e) {
+        var vc = e.target.closest('.video-container[data-video-id]');
+        if (vc) {
+          e.stopImmediatePropagation();
+          var vid = vc.dataset.videoId;
+          if (window.location.protocol === 'file:') {
+            window.open('https://www.youtube.com/watch?v=' + vid, '_blank');
+          } else {
+            var iframe = document.createElement('iframe');
+            iframe.src = 'https://www.youtube-nocookie.com/embed/' + vid + '?autoplay=1';
+            iframe.setAttribute('frameborder', '0');
+            iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+            iframe.setAttribute('allowfullscreen', '');
+            vc.innerHTML = '';
+            vc.appendChild(iframe);
+          }
+          return;
+        }
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+        if (e.key === 'ArrowLeft') { prev(); }
+        if (e.key === 'n' || e.key === 'N') {
+          notesVisible = !notesVisible;
+          if (notesPanel) notesPanel.classList.toggle('visible', notesVisible);
+          show(idx);
+        }
+      });
+
+      document.addEventListener('click', function(e) {
+        if (e.target.closest('.controls') || e.target.closest('.notes-panel') || e.target.closest('.video-container') || e.target.closest('.media-container')) return;
+        var x = e.clientX / window.innerWidth;
+        x > 0.5 ? next() : prev();
+      });
+
+      var touchStartX = 0;
+      document.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; });
+      document.addEventListener('touchend', function(e) {
+        var diff = e.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(diff) > 50) { diff < 0 ? next() : prev(); }
+      });
+
+      // Print / PDF export
+      window.addEventListener('beforeprint', function() {
+        slides.forEach(function(s) { s.style.display = ''; });
+        document.body.classList.add('printing');
+
+        slides.forEach(function(s) {
+          var fit = s.querySelector(':scope > .slide-fit');
+          if (!fit) {
+            fit = document.createElement('div');
+            fit.className = 'slide-fit';
+            while (s.firstChild) fit.appendChild(s.firstChild);
+            s.appendChild(fit);
+          }
+          var cs = window.getComputedStyle(s);
+          fit.style.cssText =
+            'display:flex;width:100%;height:100%;' +
+            'flex-direction:' + (cs.flexDirection || 'column') + ';' +
+            'justify-content:' + (cs.justifyContent || 'center') + ';' +
+            'align-items:' + (cs.alignItems || 'stretch') + ';' +
+            'text-align:' + (cs.textAlign || 'left') + ';' +
+            'gap:' + (cs.gap || '0') + ';' +
+            'transform-origin:top left;transform:none;';
+          for (var i = 0; i < fit.children.length; i++) {
+            fit.children[i].style.flexShrink = '0';
+          }
+
+          s._priorStyle = s.style.cssText;
+          s.style.cssText +=
+            ';display:flex !important;width:13.33in !important;height:7.5in !important;' +
+            'padding:0.55in 0.85in !important;box-sizing:border-box !important;' +
+            'overflow:hidden !important;';
+
+          var cw = fit.clientWidth, ch = fit.clientHeight;
+          var sw = fit.scrollWidth, sh = fit.scrollHeight;
+          if (sw > cw + 1 || sh > ch + 1) {
+            var k = Math.min(cw / sw, ch / sh);
+            fit.style.width = (cw / k) + 'px';
+            fit.style.height = (ch / k) + 'px';
+            fit.style.transform = 'scale(' + k + ')';
+            fit.dataset.fitScale = k.toFixed(3);
+          }
+        });
+      });
+
+      window.addEventListener('afterprint', function() {
+        document.body.classList.remove('printing');
+        document.querySelectorAll('.slide > .slide-fit').forEach(function(fit) {
+          var s = fit.parentElement;
+          while (fit.firstChild) {
+            var child = fit.firstChild;
+            if (child.style && child.style.flexShrink) child.style.flexShrink = '';
+            s.appendChild(child);
+          }
+          fit.remove();
+          if (s._priorStyle !== undefined) {
+            s.style.cssText = s._priorStyle;
+            delete s._priorStyle;
+          }
+        });
+        show(idx);
+      });
+
+      show(0);
+    })();
+  </script>
+</body>
+</html>
