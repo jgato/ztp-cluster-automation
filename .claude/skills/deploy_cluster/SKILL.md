@@ -60,7 +60,7 @@ Commit kustomization.yaml with message `"adding cluster <cluster-name>"` and pus
 
 Invoke `/sync_argocd` with arguments: hub endpoint, `"clusters"` as application name.
 
-When the sync skill completes, immediately continue to step 6.
+**CRITICAL: The sync is a mid-workflow step, NOT the end of this skill. When the sync command finishes, you MUST continue to step 6 in the SAME response. Do NOT stop, do NOT wait for user input, do NOT treat the sync completion as a stopping point.**
 
 ### 6. Monitor installation
 

@@ -26,13 +26,3 @@ With prune:
 ```bash
 argocd app sync <app-name> --insecure --grpc-web --prune
 ```
-
-### 2. Wait for sync completion (prune only)
-
-If prune flag was set, wait up to 5 minutes for the sync to complete:
-
-```bash
-argocd app wait <app-name> --insecure --grpc-web --timeout 300
-```
-
-If the wait times out, report the timeout and EXIT.

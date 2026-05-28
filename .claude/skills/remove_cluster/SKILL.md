@@ -35,7 +35,7 @@ Commit kustomization.yaml with message `"removing cluster <cluster-name>"` and p
 
 Invoke `/sync_argocd` with arguments: hub endpoint, `"clusters"` as application name, and `prune` flag.
 
-When the sync skill completes, immediately continue to step 5.
+**CRITICAL: The sync is a mid-workflow step, NOT the end of this skill. When the sync command finishes, you MUST continue to step 5 in the SAME response. Do NOT stop, do NOT wait for user input, do NOT treat the sync completion as a stopping point.**
 
 ### 5. Monitor removal
 
