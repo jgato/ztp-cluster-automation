@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>ZTP Cluster Automation with Claude Code</title>
+<title>Infrastructure Lifecycle Management with AI Agent Skills</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code&display=swap');
 
@@ -254,8 +254,7 @@
 
 <!-- Slide 1: Title -->
 <div class="slide title-slide active">
-  <h1>ZTP Cluster Automation</h1>
-  <p class="subtitle">Intelligent Cluster Lifecycle Management with Claude Code</p>
+  <h1>Infrastructure Life Cycle Management<br>with AI Agent Skills</h1>
   <div style="margin-top: 30px;">
     <span class="tag">OpenShift</span>
     <span class="tag">RHACM</span>
@@ -266,7 +265,21 @@
   <p class="author">Jose Gato Luis &mdash; Red Hat</p>
 </div>
 
-<!-- Slide 2: Background -->
+<!-- Slide 2: Index -->
+<div class="slide">
+  <h2>Agenda</h2>
+  <ul>
+    <li>Background &amp; Context</li>
+    <li>ZTP Platform Architecture &amp; ClusterInstance CR</li>
+    <li>The Problem &mdash; manual cluster operations</li>
+    <li>AI Agent Skills &mdash; what they are and how they work</li>
+    <li>Deploy, Redeploy &amp; Smart Monitoring</li>
+    <li>Key Learnings</li>
+    <li>Demo</li>
+  </ul>
+</div>
+
+<!-- Slide 3: Background -->
 <div class="slide">
   <h2>Background</h2>
   <div class="two-col">
@@ -283,9 +296,9 @@
   </div>
 </div>
 
-<!-- Slide 3: Context -->
+<!-- Slide 4: Context -->
 <div class="slide">
-  <h2>Context</h2>
+  <h2>Infrastructure Life Cycle Management</h2>
   <div class="three-col">
     <div class="card">
       <span class="icon">&#x1F5A5;</span>
@@ -306,106 +319,24 @@
 
 </div>
 
-<!-- Slide 3: The Problem -->
+<!-- Slide 5: ZTP Platform Architecture -->
 <div class="slide">
-  <h2>My daily tasks, what to solve?</h2>
-  <p style="font-size:1.4em; margin-bottom: 30px;">
-
-    RHACM is a tool to use an Openshift cluster, to manage other Openshift/Kubernetes clusters (install, remove, configure, upgrade, etc).
-  </p>
-  <p style="font-size:1.4em; margin-bottom: 30px;">
-    With a Zero Touch Provisioning GitOps methodology. Remove a file that defines a cluster, removes the cluster.
-  </p>
-  <p style="font-size:1.4em; margin-bottom: 30px;">
-    Deploy, remove, redeploy many clusters with no human intervention.
-  </p>
-
-  <div class="two-col">
-    <div>
-      <h3>Manual Steps</h3>
-      <ul>
-        <li>Kustomization file contains cluster's definition</li>
-        <li>Edit kustomization.yaml</li>
-        <li>Comment (remove), uncomment (deploy) line</li>
-        <li>Git commit and push</li>
-        <li>Sync ArgoCD application</li>
-        <li>Monitor installation for around an hour</li>
-        <li>Something went wrong, go to line 2, repeat :( </li>
-        <li>Extract credentials when done</li>
-      </ul>
+  <h2>Infrastructure Management: ArgoCD + ACM</h2>
+  <p style="font-size:1.2em; margin-bottom: 20px;">RHACM manages clusters &bull; ArgoCD syncs ClusterInstance CRs from Git</p>
+  <div class="two-col" style="gap: 30px; align-items: center;">
+    <div style="text-align: center;">
+      <img src="images/argocd-clusters.png" alt="ArgoCD clusters application" style="max-width: 100%; max-height: 55vh; border-radius: 10px; border: 1px solid #d3cbb7; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <p style="font-size: 0.9em; color: #93a1a1; margin-top: 10px;">ArgoCD &mdash; ClusterInstance CRs synced from Git</p>
     </div>
-    <div>
-      <h3>Pain Points</h3>
-      <ul>
-        <li>Edit yaml, comment a line, commit push, sync argoc, watch installation</li>
-        <li>Do your daily whatever in the cluster</li>
-        <li>Repeat: edit yaml, uncomment line, commit......</li>
-      </ul>
+    <div style="text-align: center;">
+      <img src="images/rhacm-clusters.png" alt="RHACM Clusters view" style="max-width: 100%; max-height: 55vh; border-radius: 10px; border: 1px solid #d3cbb7; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <p style="font-size: 0.9em; color: #93a1a1; margin-top: 10px;">RHACM &mdash; Managed clusters</p>
     </div>
+
   </div>
 </div>
 
-<!-- Slide 3: ZTP Platform Architecture -->
-<div class="slide">
-  <h2>ZTP Platform Architecture</h2>
-  <p style="font-size:1.2em; margin-bottom: 30px;">End-to-end flow: from Git commit to bare-metal cluster</p>
-
-  <div class="flow-diagram" style="gap: 0; margin-bottom: 40px;">
-    <div style="text-align:center;">
-      <div class="flow-box" style="min-width:160px; border-color:#268bd2; background:#eee8d5;">
-        <div style="font-size:1.6em; margin-bottom:4px;">&#x1F4C2;</div>
-        <strong style="color:#268bd2;">Git Repository</strong><br>
-        <span style="font-size:0.8em; color:#777;">ClusterInstance CRs<br>kustomization.yaml</span>
-      </div>
-    </div>
-    <span class="flow-arrow" style="font-size:2em;">&rarr;</span>
-    <div style="text-align:center;">
-      <div class="flow-box" style="min-width:160px; border-color:#268bd2; background:#eee8d5;">
-        <div style="font-size:1.6em; margin-bottom:4px;">&#x1F504;</div>
-        <strong style="color:#268bd2;">OpenShift GitOps</strong><br>
-        <span style="font-size:0.8em; color:#777;">ArgoCD<br>Watches repo, syncs CRs</span>
-      </div>
-    </div>
-    <span class="flow-arrow" style="font-size:2em;">&rarr;</span>
-    <div style="text-align:center;">
-      <div class="flow-box" style="min-width:160px; border-color:#859900; background:#eee8d5;">
-        <div style="font-size:1.6em; margin-bottom:4px;">&#x1F3E0;</div>
-        <strong style="color:#859900;">RHACM</strong><br>
-        <span style="font-size:0.8em; color:#777;">Siteconfig Operator<br>Processes ClusterInstance</span>
-      </div>
-    </div>
-    <span class="flow-arrow" style="font-size:2em;">&rarr;</span>
-    <div style="text-align:center;">
-      <div class="flow-box" style="min-width:160px; border-color:#6c71c4; background:#eee8d5;">
-        <div style="font-size:1.6em; margin-bottom:4px;">&#x1F527;</div>
-        <strong style="color:#6c71c4;">Assisted Service</strong><br>
-        <span style="font-size:0.8em; color:#777;">ISO generation<br>Bare-metal provisioning</span>
-      </div>
-    </div>
-    <span class="flow-arrow" style="font-size:2em;">&rarr;</span>
-    <div style="text-align:center;">
-      <div class="flow-box" style="min-width:160px; border-color:#b58900; background:#eee8d5;">
-        <div style="font-size:1.6em; margin-bottom:4px;">&#x1F5A5;</div>
-        <strong style="color:#b58900;">Bare Metal Host</strong><br>
-        <span style="font-size:0.8em; color:#777;">OpenShift SNO/MNO<br>Running cluster</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="two-col">
-    <div class="card">
-      <h3>GitOps Flow</h3>
-      <ul>
-        <li>ClusterInstance CR defines the desired cluster</li>
-        <li>Push to Git triggers ArgoCD sync</li>
-        <li>ArgoCD applies CRs to hub cluster</li>
-        <li>Siteconfig Operator creates BareMetalHost, InfraEnv, AgentClusterInstall</li>
-      </ul>
-    </div>
-   </div>
-</div>
-
-<!-- Slide 4: ClusterInstance CR -->
+<!-- Slide 6: ClusterInstance CR -->
 <div class="slide">
   <h2>One YAML Defines an Entire Cluster</h2>
   <div class="two-col" style="gap: 40px;">
@@ -452,9 +383,99 @@
   </div>
 </div>
 
-<!-- Slide 5: Skills Overview -->
+<!-- Slide 7: The Problem -->
 <div class="slide">
-  <h2>Skills</h2>
+  <h2>My daily tasks, what to solve?</h2>
+  <p style="font-size:1.4em; margin-bottom: 30px;">
+
+    RHACM is a tool to use an Openshift cluster, to manage other Openshift/Kubernetes clusters (install, remove, configure, upgrade, etc).
+  </p>
+  <p style="font-size:1.4em; margin-bottom: 30px;">
+    With a Zero Touch Provisioning GitOps methodology. Remove a file that defines a cluster, removes the cluster.
+  </p>
+  <p style="font-size:1.4em; margin-bottom: 30px;">
+    Deploy, remove, redeploy many clusters with no human intervention.
+  </p>
+
+  <div class="two-col">
+    <div>
+      <h3>Manual Steps</h3>
+      <ul>
+        <li>Kustomization file contains cluster's definition</li>
+        <li>Edit kustomization.yaml</li>
+        <li>Comment (remove), uncomment (deploy) line</li>
+        <li>Git commit and push</li>
+        <li>Sync ArgoCD application</li>
+        <li>Monitor installation for around an hour</li>
+        <li>Something went wrong, go to line 2, repeat :( </li>
+        <li>Extract credentials when done</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Pain Points</h3>
+      <ul>
+        <li>Edit yaml, comment a line, commit push, sync argoc, watch installation</li>
+        <li>Do your daily whatever in the cluster</li>
+        <li>Repeat: edit yaml, uncomment line, commit......</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 8: AI Agent Skills (section title) -->
+<div class="slide title-slide">
+  <h1>AI Agent Skills</h1>
+  <p class="subtitle" style="margin-top: 20px;">Repeatable workflows defined in natural language</p>
+</div>
+
+<!-- Slide 9: What is a Skill? -->
+
+<div class="slide">
+  <h2>What is a Skill?</h2>
+  <p style="font-size:1.3em; margin-bottom: 20px;">A <strong>SKILL.md</strong> file that teaches the AI agent a repeatable workflow using natural language.</p>
+  <div class="two-col" style="gap: 40px;">
+    <div class="code-block" style="font-size: 0.85em; line-height: 1.6; margin: 0;">
+      <span class="comment"># .claude/skills/check_pod_health/SKILL.md</span><br>
+      <br>
+      <span style="color:#268bd2;">---</span><br>
+      <span style="color:#268bd2;">name:</span> check_pod_health<br>
+      <span style="color:#268bd2;">description:</span> Check health of pods in a namespace<br>
+      <span style="color:#268bd2;">allowed-tools:</span> Bash(oc *)<br>
+      <span style="color:#268bd2;">---</span><br>
+      <br>
+      <span class="comment"># Instructions</span><br>
+      <br>
+      The user provides a &lt;namespace&gt; as argument.<br>
+      <br>
+      1. List all pods:<br>
+      &nbsp;&nbsp;&nbsp;<span class="cmd">oc</span> <span class="arg">get pods -n &lt;namespace&gt;</span><br>
+      2. Find pods not in Running/Completed state<br>
+      3. For each unhealthy pod, get logs:<br>
+      &nbsp;&nbsp;&nbsp;<span class="cmd">oc</span> <span class="arg">logs &lt;pod&gt; -n &lt;namespace&gt; --tail=20</span><br>
+      4. Report a summary table with status and errors
+    </div>
+    <div>
+      <h3>Key Concepts</h3>
+      <ul>
+        <li><strong>Frontmatter</strong> &mdash; name, description, and allowed tools</li>
+        <li><strong>Natural language</strong> &mdash; steps written as plain instructions</li>
+        <li><strong>Scoped permissions</strong> &mdash; only the tools listed are available</li>
+        <li><strong>Invoked as /skill_name</strong> &mdash; like a slash command</li>
+      </ul>
+      <h3 style="margin-top: 20px;">Why Skills?</h3>
+      <ul>
+        <li>Repeatable &mdash; same workflow every time</li>
+        <li>Composable &mdash; parent skills call child skills</li>
+        <li>Sandboxed &mdash; limited to declared tools</li>
+        <li>Versionable &mdash; stored in Git alongside code</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 10: Skills Overview -->
+<div class="slide">
+  <h2>Infrastructure Life Cycle Management Skills</h2>
   <table>
     <tr>
       <th>Skill</th>
@@ -499,7 +520,7 @@
   </table>
 </div>
 
-<!-- Slide 6: Deploy Cluster Example -->
+<!-- Slide 11: Deploy Cluster Example -->
 <div class="slide">
   <h2>Deploy a Cluster with One Command</h2>
   <div class="two-col" style="gap: 40px;">
@@ -541,7 +562,7 @@
   </div>
 </div>
 
-<!-- Slide 7: Smart Monitoring -->
+<!-- Slide 12: Smart Monitoring -->
 <div class="slide">
   <h2>Smart Monitoring</h2>
   <p style="font-size:1.2em; margin-bottom: 20px;">Parallel data collection with ANSI-formatted status reports</p>
@@ -573,7 +594,7 @@
   </div>
 </div>
 
-<!-- Slide 9: Redeploy Cluster Example -->
+<!-- Slide 13: Redeploy Cluster Example -->
 <div class="slide">
   <h2>Redeploy with Secret Preservation</h2>
   <div class="two-col" style="gap: 40px;">
@@ -619,7 +640,7 @@
   </div>
 </div>
 
-<!-- Slide 10: Design Decisions -->
+<!-- Slide 14: Key Learnings -->
 <div class="slide">
   <h2>My key learnings</h2>
   <div class="three-col">
@@ -654,7 +675,7 @@
   </div>
 </div>
 
-<!-- Slide 11: Demo -->
+<!-- Slide 15: Demo -->
 <div class="slide title-slide">
   <h1>Demo</h1>
   <p class="subtitle" style="margin-top: 20px;">Let's deploy a cluster</p>
@@ -671,41 +692,13 @@
   </div>
 </div>
 
-<!-- Slide 12: Summary -->
-<div class="slide">
-  <h2>Summary</h2>
-  <div class="three-col" style="text-align: center; margin-top: 30px;">
-    <div>
-      <div class="big-number">7</div>
-      <div class="stat-label">Skills</div>
-    </div>
-    <div>
-      <div class="big-number">8</div>
-      <div class="stat-label">Bash Scripts</div>
-    </div>
-    <div>
-      <div class="big-number">1</div>
-      <div class="stat-label">Command to Deploy</div>
-    </div>
-  </div>
-  <div style="margin-top: 50px;">
-    <ul>
-      <li>Natural language interface to complex infrastructure operations</li>
-      <li>Deterministic scripts where reliability matters, LLM where flexibility matters</li>
-      <li>Full cluster lifecycle: deploy, remove, redeploy with secret preservation</li>
-      <li>Real-time parallel monitoring with rich formatted output</li>
-      <li>GitOps-native: every change is a commit, every sync is tracked</li>
-    </ul>
-  </div>
-</div>
-
-<!-- Slide: Questions -->
+<!-- Slide 16: Questions -->
 <div class="slide title-slide">
   <h1>Questions?</h1>
   <p class="subtitle" style="margin-top: 20px;">Thank you!</p>
   <div style="margin-top: 40px; text-align: center;">
     <p style="font-size: 1.3em; color: #073642; font-weight: 600;">Jose Gato Luis</p>
-    <p style="font-size: 1.1em; color: #93a1a1;">jgato@redhat.com</p>
+    <p style="font-size: 1.1em; color: #93a1a1;">jgato.luis@gmail.com</p>
     <div style="margin-top: 30px;">
       <p style="font-size: 1.1em; color: #268bd2; font-family: 'Fira Code', monospace;">github.com/jgato/ztp-cluster-automation</p>
     </div>
