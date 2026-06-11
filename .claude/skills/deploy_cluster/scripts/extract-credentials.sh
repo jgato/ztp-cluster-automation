@@ -37,6 +37,7 @@ fi
 $OC_CMD get secret "${CLUSTER_NAME}-admin-kubeconfig" -n "$CLUSTER_NAME" \
     -o jsonpath='{.data.kubeconfig}' | base64 -d > "$OUTPUT_DIR/kubeconfig"
 
-echo "KUBEADMIN_PASSWORD=$KUBEADMIN_PASSWORD"
+MASKED_PASSWORD="${KUBEADMIN_PASSWORD:0:5}*****"
+echo "KUBEADMIN_PASSWORD=$MASKED_PASSWORD"
 echo "KUBEADMIN_PASSWORD_FILE=$OUTPUT_DIR/kubeadmin-password"
 echo "KUBECONFIG_FILE=$OUTPUT_DIR/kubeconfig"
