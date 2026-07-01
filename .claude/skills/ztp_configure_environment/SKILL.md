@@ -1,7 +1,7 @@
 ---
-name: configure_environment
+name: ztp_configure_environment
 description: Configure environment for ZTP operations by setting up KUBECONFIG and hub selection
-allowed-tools: Bash(.claude/skills/configure_environment/scripts/*:*), Bash(oc --kubeconfig *), Bash(argocd:*)
+allowed-tools: Bash(.claude/skills/ztp_configure_environment/scripts/*:*), Bash(oc --kubeconfig *), Bash(argocd:*)
 ---
 
 # Configure Environment for ZTP
@@ -24,7 +24,7 @@ Configure the environment for GitOps operations over clusters. Takes one require
 ### 2. Check cluster connectivity
 
 ```bash
-.claude/skills/configure_environment/scripts/check_cluster_kubeconfig.sh <kubeconfig-path>
+.claude/skills/ztp_configure_environment/scripts/check_cluster_kubeconfig.sh <kubeconfig-path>
 ```
 
 If exit code != 0: return **1** with message "Cluster not reachable with provided kubeconfig".

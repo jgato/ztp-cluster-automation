@@ -1,7 +1,7 @@
 ---
-name: visualize-cluster-status
+name: ztp_visualize_cluster_status
 description: Display comprehensive status of ZTP/RHACM clusters including ClusterInstance, installation progress, agents, and all related resources.
-allowed-tools: Write(.temp/**), Bash(.claude/skills/visualize_cluster_status/scripts/get-cluster-status.sh:*)
+allowed-tools: Write(.temp/**), Bash(.claude/skills/ztp_visualize_cluster_status/scripts/get-cluster-status.sh:*)
 ---
 
 # ZTP Cluster Status Visualization Skill
@@ -51,13 +51,13 @@ Denied:
 **ALWAYS use the existing script** - DO NOT create new scripts:
 
 ```bash
-.claude/skills/visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name> <kubeconfig-path>
+.claude/skills/ztp_visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name> <kubeconfig-path>
 ```
 
 This script:
 - Always call the script with a realtive path to the project. 
-  - CORRECT: `.claude/skills/visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name> <kubeconfig>`
-  - NOT CORRECT: `/home/user/project/.claude/skills/visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name>`
+  - CORRECT: `.claude/skills/ztp_visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name> <kubeconfig>`
+  - NOT CORRECT: `/home/user/project/.claude/skills/ztp_visualize_cluster_status/scripts/get-cluster-status.sh <cluster-name>`
 - Never export the KUBECONFIG before calling the script. The KUBECONFIG is passed as the second param.
 - Performs parallel data gathering for all cluster resources
 - Handles ClusterInstance existence check automatically
@@ -99,7 +99,7 @@ This script:
 
 1. **Execute the data collection script:**
    ```bash
-   .claude/skills/visualize_cluster_status/scripts/get-cluster-status.sh "$CLUSTER_NAME" "$KUBECONFIG_PATH"
+   .claude/skills/ztp_visualize_cluster_status/scripts/get-cluster-status.sh "$CLUSTER_NAME" "$KUBECONFIG_PATH"
    ```
 
 2. **Parse the script output** (key=value pairs, one per line):

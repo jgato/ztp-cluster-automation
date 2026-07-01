@@ -1,7 +1,7 @@
 ---
-name: remove_cluster
+name: ztp_remove_cluster
 description: Complete GitOps workflow to remove a ZTP cluster
-allowed-tools: Bash(git:*), Bash(sleep:*), Skill(sync_argocd), Skill(visualize_cluster_status), Read, Edit
+allowed-tools: Bash(git:*), Bash(sleep:*), Skill(ztp_sync_argocd), Skill(ztp_visualize_cluster_status), Read, Edit
 ---
 
 # Remove ZTP Cluster
@@ -33,18 +33,18 @@ Commit kustomization.yaml with message `"removing cluster <cluster-name>"` and p
 
 ### 4. Sync ArgoCD with prune
 
-Invoke `/sync_argocd` with arguments: hub endpoint, `"clusters"` as application name, and `prune` flag.
+Invoke `/ztp_sync_argocd` with arguments: hub endpoint, `"clusters"` as application name, and `prune` flag.
 
 **CRITICAL: The sync is a mid-workflow step, NOT the end of this skill. When the sync command finishes, you MUST continue to step 5 in the SAME response. Do NOT stop, do NOT wait for user input, do NOT treat the sync completion as a stopping point.**
 
 ### 5. Monitor removal
 
-**CRITICAL: Use ONLY `/visualize_cluster_status` skill. NO direct oc commands. NO extra investigation. NO debugging.**
+**CRITICAL: Use ONLY `/ztp_visualize_cluster_status` skill. NO direct oc commands. NO extra investigation. NO debugging.**
 
 **Maximum wait: 1 hour (60 minutes)**
 
 Check every 5 minutes (`sleep 300`):
-1. Invoke `/visualize_cluster_status` for the cluster
+1. Invoke `/ztp_visualize_cluster_status` for the cluster
 2. Display the complete result verbatim (don't summarize)
 3. If ClusterInstance shows "NOT DEPLOYED": proceed to step 6
 4. Otherwise: sleep 300 and repeat

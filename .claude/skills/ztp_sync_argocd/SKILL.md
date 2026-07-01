@@ -1,5 +1,5 @@
 ---
-name: sync_argocd
+name: ztp_sync_argocd
 description: Synchronize an ArgoCD application on a hub instance using SSO authentication
 allowed-tools: Bash(argocd:*), Bash(sleep:*)
 ---

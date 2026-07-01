@@ -1,7 +1,7 @@
 ---
-name: telco-hub-rds-status
+name: ztp_telco_hub_status
 description: Display comprehensive status of Telco Hub RDS clusters including operator versions and CR statuses
-allowed-tools: Write(.temp/**), Bash(.claude/skills/telco_hub_rds_status/scripts/*:*)
+allowed-tools: Write(.temp/**), Bash(.claude/skills/ztp_telco_hub_status/scripts/*:*)
 ---
 
 # Telco Hub RDS Status Visualization Skill
@@ -13,8 +13,8 @@ The skill never returns instructions. If there is something it cannot execute, r
 ## FORBIDDEN: Script Creation
 
 **CRITICAL:** You MUST NOT create any new scripts. ONLY execute the existing scripts:
-- `.claude/skills/telco_hub_rds_status/scripts/get-operator-versions.sh`
-- `.claude/skills/telco_hub_rds_status/scripts/get-cr-statuses.sh`
+- `.claude/skills/ztp_telco_hub_status/scripts/get-operator-versions.sh`
+- `.claude/skills/ztp_telco_hub_status/scripts/get-cr-statuses.sh`
 
 **DO NOT:**
 - Create helper scripts, wrapper scripts, or any new .sh files
@@ -68,8 +68,8 @@ Denied:
 
 3. **Execute BOTH data collection scripts in parallel (DO NOT create new scripts):**
    ```bash
-   .claude/skills/telco_hub_rds_status/scripts/get-operator-versions.sh "$KUBECONFIG_PATH" .temp/telco-hub-rds-status-$CLUSTER_NAME &
-   .claude/skills/telco_hub_rds_status/scripts/get-cr-statuses.sh "$KUBECONFIG_PATH" .temp/telco-hub-rds-status-$CLUSTER_NAME &
+   .claude/skills/ztp_telco_hub_status/scripts/get-operator-versions.sh "$KUBECONFIG_PATH" .temp/telco-hub-rds-status-$CLUSTER_NAME &
+   .claude/skills/ztp_telco_hub_status/scripts/get-cr-statuses.sh "$KUBECONFIG_PATH" .temp/telco-hub-rds-status-$CLUSTER_NAME &
    wait
    ```
 

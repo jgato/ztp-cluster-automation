@@ -14,15 +14,15 @@ All `oc` commands MUST use `--kubeconfig` as the FIRST parameter after `oc`.
 - **Wrong:** `oc get --kubeconfig <path> pods`
 - **Wrong:** `oc get pods --kubeconfig <path>`
 
-The kubeconfig path comes from the environment variable or the context set by `configure_environment`.
+The kubeconfig path comes from the environment variable or the context set by `ztp_configure_environment`.
 
 ### ArgoCD commands
 
-All ArgoCD commands use `--insecure` and `--grpc-web`. The endpoint is auto-configured by the `configure_environment` skill from the `openshift-gitops-server` Route.
+All ArgoCD commands use `--insecure` and `--grpc-web`. The endpoint is auto-configured by the `ztp_configure_environment` skill from the `openshift-gitops-server` Route.
 
 ### Script execution
 
-- Use relative paths from project root: `.claude/skills/deploy_cluster/scripts/script.sh`
+- Use relative paths from project root: `.claude/skills/ztp_deploy_cluster/scripts/script.sh`
 - Never `cd` to the script directory
 - Never export KUBECONFIG before calling a script (pass it as a parameter)
 - Never prefix script calls with environment variables
@@ -55,7 +55,7 @@ All temporary data goes under `.temp/` in the project root (git-ignored, never c
 
 All skills are in `.claude/skills/<skill-name>/SKILL.md`. Scripts are in `.claude/skills/<skill-name>/scripts/`.
 
-### configure_environment
+### ztp_configure_environment
 
 Sets up the environment for all ZTP operations. Must be run first in any session.
 
@@ -63,32 +63,32 @@ Sets up the environment for all ZTP operations. Must be run first in any session
 - **What it does:** Validates kubeconfig, checks cluster connectivity, extracts ArgoCD endpoint from the `openshift-gitops-server` Route, and authenticates ArgoCD via SSO.
 - **Return codes:** 0 (success), 1 (error)
 
-### deploy_cluster
+### ztp_deploy_cluster
 
 Complete GitOps workflow to deploy a ZTP cluster. Parent workflow with 7 steps.
 
 - **Args:** `<cluster-name>` (single cluster only)
 - **What it does:** Pre-validates manifests and kustomization state, creates namespace and secrets (from backup or fresh via zenity), updates kustomization.yaml, commits and pushes, syncs ArgoCD, monitors installation up to 3 hours, and extracts cluster credentials on success.
 - **Scripts:** `pre-validate.sh`, `prepare_ztp_cluster_pre_reqs.sh`, `extract-credentials.sh`
-- **Calls:** `sync_argocd`, `visualize_cluster_status`
+- **Calls:** `ztp_sync_argocd`, `ztp_visualize_cluster_status`
 
-### remove_cluster
+### ztp_remove_cluster
 
 Complete GitOps workflow to remove a ZTP cluster. Parent workflow with 8 steps.
 
 - **Args:** `<cluster-name>` (single cluster only)
 - **What it does:** Verifies cluster exists in kustomization.yaml and is not already commented, comments the entry, commits and pushes, syncs ArgoCD with prune, monitors removal until ClusterInstance shows "NOT DEPLOYED" (5-minute check intervals).
-- **Calls:** `sync_argocd`, `visualize_cluster_status`
+- **Calls:** `ztp_sync_argocd`, `ztp_visualize_cluster_status`
 
-### redeploy_cluster
+### ztp_redeploy_cluster
 
 Complete workflow to remove and redeploy a cluster while preserving secrets. Parent workflow with 7 steps.
 
 - **Args:** `<cluster-name>` (single cluster only)
-- **What it does:** Backs up `assisted-deployment-pull-secret` and `<cluster>-bmc-secret` to `.temp/redeploy-<name>/`, invokes `remove_cluster`, waits for removal, recreates namespace and restores secrets if needed, then invokes `deploy_cluster`.
-- **Calls:** `remove_cluster`, `deploy_cluster`
+- **What it does:** Backs up `assisted-deployment-pull-secret` and `<cluster>-bmc-secret` to `.temp/redeploy-<name>/`, invokes `ztp_remove_cluster`, waits for removal, recreates namespace and restores secrets if needed, then invokes `ztp_deploy_cluster`.
+- **Calls:** `ztp_remove_cluster`, `ztp_deploy_cluster`
 
-### sync_argocd
+### ztp_sync_argocd
 
 Synchronizes an ArgoCD application. Simple child skill.
 
@@ -96,7 +96,7 @@ Synchronizes an ArgoCD application. Simple child skill.
 - **Model:** haiku (cost-optimized)
 - **What it does:** Refreshes and syncs the named ArgoCD application. If prune flag is set, syncs with `--prune` and waits up to 5 minutes for completion.
 
-### visualize_cluster_status
+### ztp_visualize_cluster_status
 
 Displays comprehensive status of a ZTP cluster. Read-only child skill.
 
@@ -105,7 +105,7 @@ Displays comprehensive status of a ZTP cluster. Read-only child skill.
 - **What it does:** Runs `get-cluster-status.sh` for parallel data collection of ClusterInstance, BareMetalHost, InfraEnv, AgentClusterInstall, Agents, and ManagedCluster. Formats output as ANSI-colored ASCII tables with status icons.
 - **Scripts:** `get-cluster-status.sh`, `collect-resource-data.sh`, `monitor-cluster.sh`
 
-### telco_hub_rds_status
+### ztp_telco_hub_status
 
 Displays status of Telco Hub RDS operators and CRs. Read-only skill.
 
@@ -118,31 +118,31 @@ Displays status of Telco Hub RDS operators and CRs. Read-only skill.
 ### Deploy a new cluster
 
 ```
-User: configure_environment /path/to/kubeconfig
-User: deploy_cluster sno1
+User: ztp_configure_environment /path/to/kubeconfig
+User: ztp_deploy_cluster sno1
 ```
 
-Flow: `configure_environment` -> `deploy_cluster` -> `pre-validate.sh` -> `prepare_ztp_cluster_pre_reqs.sh` -> edit kustomization.yaml -> git commit/push -> `sync_argocd` -> monitor via `visualize_cluster_status` (up to 3h) -> `extract-credentials.sh`
+Flow: `ztp_configure_environment` -> `ztp_deploy_cluster` -> `pre-validate.sh` -> `prepare_ztp_cluster_pre_reqs.sh` -> edit kustomization.yaml -> git commit/push -> `ztp_sync_argocd` -> monitor via `ztp_visualize_cluster_status` (up to 3h) -> `extract-credentials.sh`
 
 ### Remove a cluster
 
 ```
-User: configure_environment /path/to/kubeconfig
-User: remove_cluster sno1
+User: ztp_configure_environment /path/to/kubeconfig
+User: ztp_remove_cluster sno1
 ```
 
-Flow: `configure_environment` -> `remove_cluster` -> comment kustomization.yaml -> git commit/push -> `sync_argocd` (with prune) -> monitor via `visualize_cluster_status` until NOT DEPLOYED
+Flow: `ztp_configure_environment` -> `ztp_remove_cluster` -> comment kustomization.yaml -> git commit/push -> `ztp_sync_argocd` (with prune) -> monitor via `ztp_visualize_cluster_status` until NOT DEPLOYED
 
 ### Redeploy a cluster
 
 ```
-User: configure_environment /path/to/kubeconfig
-User: redeploy_cluster sno1
+User: ztp_configure_environment /path/to/kubeconfig
+User: ztp_redeploy_cluster sno1
 ```
 
-Flow: `configure_environment` -> `redeploy_cluster` -> backup secrets -> `remove_cluster` (full removal flow) -> restore namespace + secrets -> `deploy_cluster` (full deploy flow)
+Flow: `ztp_configure_environment` -> `ztp_redeploy_cluster` -> backup secrets -> `ztp_remove_cluster` (full removal flow) -> restore namespace + secrets -> `ztp_deploy_cluster` (full deploy flow)
 
-The redeploy workflow preserves BMC and pull-secret credentials so the user does not need to re-enter them. The `deploy_cluster` script detects backed-up secrets in `.temp/redeploy-<name>/` and restores them automatically instead of opening the zenity dialog.
+The redeploy workflow preserves BMC and pull-secret credentials so the user does not need to re-enter them. The `ztp_deploy_cluster` script detects backed-up secrets in `.temp/redeploy-<name>/` and restores them automatically instead of opening the zenity dialog.
 
 ### Check cluster status
 
@@ -150,7 +150,7 @@ The redeploy workflow preserves BMC and pull-secret credentials so the user does
 User: show me the status of sno1
 ```
 
-Triggers `visualize_cluster_status` which runs parallel data collection and displays a formatted status report.
+Triggers `ztp_visualize_cluster_status` which runs parallel data collection and displays a formatted status report.
 
 ### Check hub status
 
@@ -158,4 +158,4 @@ Triggers `visualize_cluster_status` which runs parallel data collection and disp
 User: show hub status
 ```
 
-Triggers `telco_hub_rds_status` which collects operator versions and CR statuses in parallel and displays formatted tables.
+Triggers `ztp_telco_hub_status` which collects operator versions and CR statuses in parallel and displays formatted tables.

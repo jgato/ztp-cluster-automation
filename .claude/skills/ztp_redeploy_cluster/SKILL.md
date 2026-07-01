@@ -1,7 +1,7 @@
 ---
-name: redeploy_cluster
+name: ztp_redeploy_cluster
 description: Complete workflow to redeploy a ZTP cluster with secret preservation
-allowed-tools: Bash(mkdir:*), Bash(oc --kubeconfig *), Bash(sleep:*), Skill(remove_cluster), Skill(deploy_cluster)
+allowed-tools: Bash(mkdir:*), Bash(oc --kubeconfig *), Bash(sleep:*), Skill(ztp_remove_cluster), Skill(ztp_deploy_cluster)
 ---
 
 # Redeploy ZTP Cluster
@@ -28,16 +28,16 @@ If either secret does not exist, report the error and EXIT.
 
 ### 2. Remove cluster
 
-Invoke `/remove_cluster` with the cluster name.
+Invoke `/ztp_remove_cluster` with the cluster name.
 
 When the remove skill completes, immediately continue to step 3. If it exits with an error, report and EXIT.
 
 ### 3. Monitor removal
 
-**CRITICAL: Use ONLY `/visualize_cluster_status` skill. NO direct oc commands. NO extra investigation.**
+**CRITICAL: Use ONLY `/ztp_visualize_cluster_status` skill. NO direct oc commands. NO extra investigation.**
 
 Verify the cluster is fully removed before proceeding:
-1. Invoke `/visualize_cluster_status` for the cluster
+1. Invoke `/ztp_visualize_cluster_status` for the cluster
 2. If ClusterInstance shows "NOT DEPLOYED": proceed to step 4
 3. Otherwise: `sleep 300` and repeat
 
@@ -60,9 +60,9 @@ oc --kubeconfig <path> apply -f .temp/redeploy-<cluster-name>/<cluster-name>-bmc
 
 ### 6. Deploy cluster
 
-Invoke `/deploy_cluster` with the cluster name.
+Invoke `/ztp_deploy_cluster` with the cluster name.
 
-The secrets are already in place. The `deploy_cluster` prepare script will verify they exist and continue without asking for credentials.
+The secrets are already in place. The `ztp_deploy_cluster` prepare script will verify they exist and continue without asking for credentials.
 
 When the deploy skill completes successfully, immediately continue to step 7. If it exits with an error, report and EXIT.
 

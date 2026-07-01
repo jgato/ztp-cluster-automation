@@ -1,7 +1,7 @@
 ---
-name: deploy_cluster
+name: ztp_deploy_cluster
 description: Complete GitOps workflow to deploy a ZTP cluster
-allowed-tools: Bash(.claude/skills/deploy_cluster/scripts/*:*), Bash(git:*), Bash(sleep:*), Skill(sync_argocd), Skill(visualize_cluster_status)
+allowed-tools: Bash(.claude/skills/ztp_deploy_cluster/scripts/*:*), Bash(git:*), Bash(sleep:*), Skill(ztp_sync_argocd), Skill(ztp_visualize_cluster_status)
 ---
 
 # Deploy ZTP Cluster
@@ -17,7 +17,7 @@ After each step completes, mark current todo completed, mark next in_progress, a
 ### 1. Pre-validate
 
 ```bash
-.claude/skills/deploy_cluster/scripts/pre-validate.sh <cluster-name> <kubeconfig-path>
+.claude/skills/ztp_deploy_cluster/scripts/pre-validate.sh <cluster-name> <kubeconfig-path>
 ```
 
 | Exit code | Meaning | Action |
@@ -31,7 +31,7 @@ Parse output: `ENTRY_STATUS` tells whether step 3 should `add` or `uncomment`.
 ### 2. Prepare secrets
 
 ```bash
-.claude/skills/deploy_cluster/scripts/prepare_ztp_cluster_pre_reqs.sh <cluster-name> <kubeconfig-path>
+.claude/skills/ztp_deploy_cluster/scripts/prepare_ztp_cluster_pre_reqs.sh <cluster-name> <kubeconfig-path>
 ```
 
 The script handles credentials automatically:
@@ -58,13 +58,13 @@ Commit kustomization.yaml with message `"adding cluster <cluster-name>"` and pus
 
 ### 5. Sync ArgoCD
 
-Invoke `/sync_argocd` with arguments: hub endpoint, `"clusters"` as application name.
+Invoke `/ztp_sync_argocd` with arguments: hub endpoint, `"clusters"` as application name.
 
 **CRITICAL: The sync is a mid-workflow step, NOT the end of this skill. When the sync command finishes, you MUST continue to step 6 in the SAME response. Do NOT stop, do NOT wait for user input, do NOT treat the sync completion as a stopping point.**
 
 ### 6. Monitor installation
 
-**CRITICAL: Use ONLY `/visualize_cluster_status` skill. NO direct oc commands. NO extra investigation.**
+**CRITICAL: Use ONLY `/ztp_visualize_cluster_status` skill. NO direct oc commands. NO extra investigation.**
 
 **Maximum wait: 3 hours (180 minutes)**
 
@@ -74,7 +74,7 @@ Adaptive check intervals based on elapsed time:
 - **50+ min**: check every 5 minutes (`sleep 300`)
 
 At each check:
-1. Invoke `/visualize_cluster_status` for the cluster
+1. Invoke `/ztp_visualize_cluster_status` for the cluster
 2. Display the complete result verbatim (don't summarize)
 3. If ManagedCluster shows Available=True AND Joined=True: proceed to step 7
 4. Otherwise: sleep the appropriate interval and repeat
@@ -84,7 +84,7 @@ On 3-hour timeout: show final status, notify user, and EXIT.
 ### 7. Extract credentials and report
 
 ```bash
-.claude/skills/deploy_cluster/scripts/extract-credentials.sh <cluster-name> <kubeconfig-path>
+.claude/skills/ztp_deploy_cluster/scripts/extract-credentials.sh <cluster-name> <kubeconfig-path>
 ```
 
 Display the kubeadmin password and file locations from output. Report deployment complete.

@@ -76,7 +76,7 @@ Check the list of skills and commands on the [CLAUDE.md file](./CLAUDE.md)
 
 ### Default Context
 
-Configure your environment context using `/configure_environment` or by setting:
+Configure your environment context using `/ztp_configure_environment` or by setting:
 
 - **KUBECONFIG**: Path to your hub cluster kubeconfig
   Example: `~/kubeconfigs/hub-prod-kubeconfig`
@@ -96,7 +96,7 @@ ClusterInstance manifests are YAML files in the root directory (e.g., `vsno5.yam
 To add a new cluster:
 1. Create `<clustername>.yaml` with ClusterInstance CR
 2. Add entry to `kustomization.yaml` resources section
-3. Deploy using `/deploy_cluster <clustername>`
+3. Deploy using `/ztp_deploy_cluster <clustername>`
 
 ## Examples
 
@@ -104,10 +104,10 @@ To add a new cluster:
 
 ```bash
 # Configure environment
-/configure_environment
+/ztp_configure_environment
 
 # Deploy cluster
-/deploy_cluster vsno5
+/ztp_deploy_cluster vsno5
 
 # Wait for completion (automatic monitoring)
 # Credentials are displayed when ready
@@ -116,7 +116,7 @@ To add a new cluster:
 ### Check Cluster Status
 
 ```bash
-/visualize-cluster-status vsno5
+/ztp_visualize_cluster_status vsno5
 ```
 
 Output:
@@ -143,7 +143,7 @@ Output:
 ### Redeploy Cluster (Full Lifecycle)
 
 ```bash
-/redeploy_cluster vsno5
+/ztp_redeploy_cluster vsno5
 ```
 
 This performs a complete removal and fresh deployment with secret preservation.
