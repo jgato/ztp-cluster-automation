@@ -256,13 +256,14 @@
 <div class="slide title-slide active">
   <h1>Infrastructure Life Cycle Management<br>with AI Agent Skills</h1>
   <div style="margin-top: 30px;">
-    <span class="tag">OpenShift</span>
-    <span class="tag">RHACM</span>
-    <span class="tag">ArgoCD</span>
-    <span class="tag">GitOps</span>
-    <span class="tag">Claude Code</span>
+
   </div>
-  <p class="author">Jose Gato Luis &mdash; Red Hat</p>
+  <p class="author" style="font-size: 2.6em;">Jose Gato Luis</p>
+  
+  <p>AI Fellowship Madrid Chapter</p>
+  <p>Universidad Complutense de Madrid</p>
+  <p> 30th of Juny 2026</p>
+
 </div>
 
 <!-- Slide 2: Index -->
@@ -303,7 +304,7 @@
     <div class="card">
       <span class="icon">&#x1F5A5;</span>
       <h3>Bare Metal at Scale</h3>
-      <p>Telco and edge deployments require hundreds of OpenShift clusters on bare-metal servers. Each needs BMC configuration, ISO booting, and full OS installation — no VMs, no cloud APIs.</p>
+      <p>Deployments require hundreds of OpenShift clusters on bare-metal servers. Each needs BMC configuration, ISO booting, and full OS installation — no VMs, no cloud APIs.</p>
     </div>
     <div class="card">
       <span class="icon">&#x1F3E0;</span>
@@ -401,7 +402,7 @@
     <div>
       <h3>Manual Steps</h3>
       <ul>
-        <li>Kustomization file contains cluster's definition</li>
+        <li>Kustomization file contains a list of cluster's definition</li>
         <li>Edit kustomization.yaml</li>
         <li>Comment (remove), uncomment (deploy) line</li>
         <li>Git commit and push</li>
@@ -428,7 +429,56 @@
   <p class="subtitle" style="margin-top: 20px;">Repeatable workflows defined in natural language</p>
 </div>
 
-<!-- Slide 9: What is a Skill? -->
+<!-- Slide 9: Claude Code as an Agent -->
+<div class="slide">
+  <h2>Claude Code as an Agent</h2>
+  <p style="font-size:1.2em; margin-bottom: 20px;">An AI coding agent that lives in your terminal and understands your codebase</p>
+  <div class="two-col" style="gap: 40px;">
+    <div>
+      <h3>What Is It?</h3>
+      <ul>
+        <li><strong>CLI-native</strong> &mdash; runs in your terminal, IDE, or CI pipeline</li>
+        <li><strong>Agentic</strong> &mdash; reads files, runs commands, edits code, interacts with APIs</li>
+        <li><strong>Context-aware</strong> &mdash; understands your project structure via CLAUDE.md</li>
+        <li><strong>Tool use</strong> &mdash; Bash, file I/O, MCP servers, git, and more</li>
+      </ul>
+      <h3 style="margin-top: 20px;">Agent Loop</h3>
+      <div class="flow-diagram" style="justify-content: flex-start; margin: 10px 0;">
+        <div class="flow-box">User prompt</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box">Plan</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box">Tool calls</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box">Observe</div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-box">Repeat</div>
+      </div>
+      <p style="font-size: 1em; margin-top: 15px;">The agent iterates autonomously: it reads output, decides the next action, and continues until the task is complete.</p>
+    </div>
+    <div>
+      <h3>Why an Agent?</h3>
+      <ul>
+        <li><strong>Beyond chat</strong> &mdash; doesn't just suggest code, it executes workflows end to end</li>
+        <li><strong>Extensible</strong> &mdash; skills, hooks, MCP servers, and sub-agents</li>
+        <li><strong>Sandboxed</strong> &mdash; permission system controls what the agent can do</li>
+        <li><strong>Persistent context</strong> &mdash; CLAUDE.md files teach it your project conventions</li>
+      </ul>
+      <h3 style="margin-top: 20px;">Key Components</h3>
+      <div class="code-block" style="font-size: 0.85em; line-height: 1.6; margin: 0;">
+        <span class="comment"># Project context</span><br>
+        CLAUDE.md &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># conventions &amp; instructions</span><br>
+        <br>
+        <span class="comment"># Extensibility</span><br>
+        .claude/skills/ &nbsp;<span class="comment"># reusable workflows</span><br>
+        settings.json &nbsp;&nbsp;<span class="comment"># permissions &amp; hooks</span><br>
+        MCP servers &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># external tool integrations</span><br>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 10: What is a Skill? -->
 
 <div class="slide">
   <h2>What is a Skill?</h2>
